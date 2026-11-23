@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- GENERATEUR : titre = nom affiché de page.yaml + nom affiché de theme.yaml -->
+<title>TCP · Réseaux</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== HEADER : thèmes (GENERATEUR : depuis tous les theme.yaml) ===== -->
+<header class="site-header">
+  <button class="menu-btn" aria-label="Menu" onclick="document.body.classList.toggle('drawer-open')">☰</button>
+  <a class="brand" href="../index.html">Mes notes</a>
+  <nav class="themes">
+    <a href="../index.html">Accueil</a>
+    <a href="../reseaux/tcp.html" class="active">Réseaux</a>
+    <a href="../python/cli.html">Python</a>
+    <a href="../linux/bash.html">Linux</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- Ordinateur : 2 colonnes séparées. Mobile : une seule sidebar -->
+  <div class="drawer">
+
+    <!-- ===== GAUCHE : table des matières de la page (remplie par le script en bas) ===== -->
+    <aside class="toc">
+      <p class="side-title">Sur cette page</p>
+      <ul class="side-list" id="toc-list"></ul>
+    </aside>
+
+    <!-- ===== DROITE : pages du thème (GENERATEUR : depuis les page.yaml du thème) ===== -->
+    <aside class="pages-col">
+      <p class="side-title">Réseaux</p>
+      <ul class="side-list">
+        <li><a href="intro.html">Introduction</a></li>
+        <li><a href="tcp.html" class="active">TCP</a></li>
+        <li><a href="udp.html">UDP</a></li>
+        <li><a href="dns.html">DNS</a></li>
+      </ul>
+    </aside>
+
+  </div>
+  <div class="overlay" onclick="document.body.classList.remove('drawer-open')"></div>
+
+  <!-- ===== CONTENU ===== -->
+  <main class="content">
+    <div class="breadcrumb">Réseaux › TCP</div>
+    <!-- GENERATEUR : nom affiché depuis page.yaml -->
+    <h1>TCP</h1>
+
+    <!-- GENERATEUR : HTML converti depuis le .md de la page (1 md = 1 page) -->
+    <article class="page-body">
+      <h2 id="principe">Principe</h2>
+      <p>TCP est un protocole <strong>orienté connexion</strong> qui garantit l'ordre et la livraison des données.</p>
+      <h3 id="poignee-de-main">Poignée de main</h3>
+      <p>La connexion s'établit en trois étapes : <code>SYN</code>, <code>SYN-ACK</code>, <code>ACK</code>.</p>
+      <blockquote>À retenir : pas de données avant la fin de la poignée de main.</blockquote>
+      <h3 id="fermeture">Fermeture</h3>
+      <p>La fermeture utilise <code>FIN</code> et <code>ACK</code> dans chaque sens.</p>
+      <h2 id="exemple-python">Exemple Python</h2>
+      <pre><code>import socket
+
+with socket.create_connection(("example.com", 80)) as s:
+    s.sendall(b"GET / HTTP/1.0\r\n\r\n")
+    print(s.recv(1024))</code></pre>
+      <h2 id="comparaison">Comparaison TCP / UDP</h2>
+      <table>
+        <tr><th>Critère</th><th>TCP</th><th>UDP</th></tr>
+        <tr><td>Connexion</td><td>Oui</td><td>Non</td></tr>
+        <tr><td>Ordre garanti</td><td>Oui</td><td>Non</td></tr>
+      </table>
+    </article>
+
+    <!-- GENERATEUR : page précédente / suivante selon l'ordre du thème -->
+    <nav class="page-nav">
+      <a href="intro.html"><small>Précédent</small>Introduction</a>
+      <a href="udp.html" class="next"><small>Suivant</small>UDP</a>
+    </nav>
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
