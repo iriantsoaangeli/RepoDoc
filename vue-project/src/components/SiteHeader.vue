@@ -1,9 +1,11 @@
 <script setup lang="ts">
-// Header du site : bouton menu (mobile), nom du site, liste des thèmes.
+// Header du site : bouton menu (mobile), nom du site, liste des thèmes, bouton recharger.
 // IonMenuButton se cache tout seul quand les colonnes sont visibles (ordinateur).
-import { IonButtons, IonHeader, IonMenuButton, IonToolbar } from '@ionic/vue'
+import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonToolbar } from '@ionic/vue'
+import { refreshOutline } from 'ionicons/icons'
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { rechargerSansCache } from '@/lecteur/MarkdownReader'
 import type { NavLink } from '@/types'
 
 defineProps<{
@@ -40,6 +42,18 @@ onMounted(() => {
           </RouterLink>
         </nav>
       </div>
+      <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
+      <IonButtons slot="end">
+        <!-- Vide le cache de la liste des fichiers : affiche les pages poussées depuis -->
+        <IonButton
+          title="Recharger le contenu"
+          aria-label="Recharger le contenu"
+          @click="rechargerSansCache"
+        >
+          <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
+          <IonIcon slot="icon-only" :icon="refreshOutline" />
+        </IonButton>
+      </IonButtons>
     </IonToolbar>
   </IonHeader>
 </template>

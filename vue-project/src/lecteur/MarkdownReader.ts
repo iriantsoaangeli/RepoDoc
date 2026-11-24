@@ -9,7 +9,8 @@ import { mdUrl } from './chemins'
 export const lireArbre = async (repo: string, dossier: string): Promise<string[]> => {
   if (import.meta.env.DEV) return (await fetch('/__arbre')).json()
 
-  if (!repo) throw new Error("Dépôt GitHub introuvable : renseigner « repo » dans app/md/config.yaml")
+  if (!repo)
+    throw new Error('Dépôt GitHub introuvable : renseigner « repo » dans app/md/config.yaml')
   const cle = `arbre:${repo}:${dossier}`
   const cache = sessionStorage.getItem(cle)
   if (cache) return JSON.parse(cache)
@@ -26,6 +27,14 @@ export const lireArbre = async (repo: string, dossier: string): Promise<string[]
     .map((f) => f.path.slice(prefixe.length))
   sessionStorage.setItem(cle, JSON.stringify(arbre))
   return arbre
+}
+
+/** Vide le cache de la liste des fichiers puis recharge la page (nouvelles pages poussées) */
+export const rechargerSansCache = (): void => {
+  Object.keys(sessionStorage)
+    .filter((cle) => cle.startsWith('arbre:'))
+    .forEach((cle) => sessionStorage.removeItem(cle))
+  location.reload()
 }
 
 export interface PageLue {
