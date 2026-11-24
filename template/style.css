@@ -50,6 +50,7 @@ ion-toolbar { --min-height: var(--header-h); --padding-start: 8px; --padding-end
 }
 .themes a:hover { background: var(--nav-hover); color: var(--nav-text); opacity: 1; text-decoration: none; }
 .themes a.active { color: var(--nav-active); background: var(--accent-soft); opacity: 1; font-weight: 600; }
+.themes a.active { box-shadow: inset 0 -3px 0 var(--orange); }
 
 /* ---------- Layout : ion-split-pane = titres | contenu | pages ---------- */
 .doc-body { position: relative; flex: 1; }

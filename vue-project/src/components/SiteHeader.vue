@@ -3,22 +3,36 @@
 // IonMenuButton se cache tout seul quand les colonnes sont visibles (ordinateur).
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonToolbar } from '@ionic/vue'
 import { refreshOutline } from 'ionicons/icons'
-import { onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { rechargerSansCache } from '@/lecteur/MarkdownReader'
 import type { NavLink } from '@/types'
 
-defineProps<{
+const props = defineProps<{
   brand: NavLink
   themes: NavLink[]
 }>()
 
 const nav = ref<HTMLElement>()
 
-// Garde le thème actif visible dans le header sur petit écran
-onMounted(() => {
-  nav.value?.querySelector('a.active')?.scrollIntoView({ inline: 'center', block: 'nearest' })
-})
+// Petit écran : centre le thème actif dans la liste des thèmes (qui défile en largeur)
+const centrerActif = async () => {
+  await nextTick()
+  requestAnimationFrame(() => {
+    const zone = nav.value
+    const actif = zone?.querySelector<HTMLElement>('a.active')
+    if (!zone || !actif) return
+    // Positions à l'écran (offsetLeft serait relatif à la toolbar, pas à la liste)
+    const z = zone.getBoundingClientRect()
+    const a = actif.getBoundingClientRect()
+    zone.scrollLeft += a.left - z.left - (z.width - a.width) / 2
+  })
+}
+watch(() => props.themes.find((t) => t.active)?.to, centrerActif, { immediate: true })
+// La largeur de la liste n'est connue qu'une fois le header rendu (polices, boutons Ionic)
+const observateur = new ResizeObserver(centrerActif)
+onMounted(() => nav.value && observateur.observe(nav.value))
+onBeforeUnmount(() => observateur.disconnect())
 </script>
 
 <template>
