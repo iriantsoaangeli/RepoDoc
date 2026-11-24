@@ -1,0 +1,11 @@
+Tree:
+
+dossier-site 
+    fichier config (yaml ou json je sais pas encore)
+    dossier theme
+        dossier pour un md 
+        fichier md (correspond a une page)
+        fichier config
+
+
+NB : C'est un site statique , on push sur le repo git pour ajoute run md mais on mettra un template pour ceux que ca interesse 
