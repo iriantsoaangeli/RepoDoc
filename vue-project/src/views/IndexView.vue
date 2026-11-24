@@ -10,7 +10,7 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import SommaireSite from '@/components/SommaireSite.vue'
 import MdBlocks from '@/components/md/MdBlocks.vue'
 import { lirePage, type PageLue } from '@/lecteur/MarkdownReader'
-import { entreeLecon, themesHeader, useSite } from '@/lecteur/RouterMarkdown'
+import { themesHeader, useSite } from '@/lecteur/RouterMarkdown'
 
 const props = defineProps<{ theme?: string }>()
 const etat = useSite()
@@ -22,31 +22,36 @@ const titre = computed(() => theme.value?.label ?? site.value.titre)
 
 // intro.md du thème, ou de la racine pour l'index général
 const intro = ref<PageLue>()
+const layout = ref<InstanceType<typeof DocLayout>>()
 watch(
   () => (props.theme ? theme.value?.intro : site.value.intro),
   async (page) => {
-    intro.value = page ? await lirePage(page.chemin).catch(() => undefined) : undefined
+    const route = theme.value?.route ?? '/'
+    intro.value = page ? await lirePage(page.chemin, route).catch(() => undefined) : undefined
+    layout.value?.positionner()
   },
   { immediate: true },
 )
-watch(titre, (t) => (document.title = t), { immediate: true })
+watch([titre, introuvable], ([t, absent]) => (document.title = absent ? 'Thème introuvable' : t), {
+  immediate: true,
+})
 </script>
 
 <template>
   <div class="ion-page">
     <SiteHeader :brand="{ label: site.titre, to: '/' }" :themes="themesHeader(site, props.theme)" />
 
-    <DocLayout>
+    <DocLayout ref="layout">
       <template #toc>
         <SideBar
-          v-if="theme"
-          title="Leçons"
-          :items="theme.lecons.map((l) => ({ label: l.label, to: entreeLecon(l)?.route ?? theme!.route }))"
-        />
-        <SideBar
-          v-else
           title="Thèmes"
-          :items="site.themes.map((t) => ({ label: t.label, to: t.route }))"
+          :items="
+            site.themes.map((t) => ({
+              label: t.label,
+              to: t.route,
+              active: t.slug === props.theme,
+            }))
+          "
         />
       </template>
 
@@ -59,7 +64,9 @@ watch(titre, (t) => (document.title = t), { immediate: true })
         <p><RouterLink to="/">Retour à l'accueil</RouterLink></p>
       </template>
       <template v-else>
-        <div v-if="theme" class="breadcrumb"><RouterLink to="/">Accueil</RouterLink> › {{ theme.label }}</div>
+        <div v-if="theme" class="breadcrumb">
+          <RouterLink to="/">Accueil</RouterLink> › {{ theme.label }}
+        </div>
         <h1>{{ intro?.titre ?? titre }}</h1>
         <article class="page-body">
           <MdBlocks v-if="intro" :tokens="intro.tokens" />

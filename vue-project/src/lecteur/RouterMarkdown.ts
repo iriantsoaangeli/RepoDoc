@@ -155,3 +155,11 @@ export const trouverPage = (site: Site, themeSlug: string, chemin: string[]) => 
   const page = pagesOrdonnees(theme).find((p) => p.chemin === cible)
   return page ? { theme, lecon, page } : undefined
 }
+
+/** Retrouve une leçon depuis la route /theme/lecon */
+export const trouverLecon = (site: Site, themeSlug: string, leconSlug: string) =>
+  site.themes.find((t) => t.slug === themeSlug)?.lecons.find((l) => l.slug === leconSlug)
+
+/** Leçon qui contient la page (undefined pour une page posée directement dans le thème) */
+export const leconDe = (theme: Theme, page: Page): Lecon | undefined =>
+  theme.lecons.find((l) => l.intro === page || l.pages.includes(page))
