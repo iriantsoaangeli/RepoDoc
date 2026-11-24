@@ -19,9 +19,12 @@ mkdir -p "$MD"
 if [ ! -f "$MD/config.yaml" ]; then
   cat > "$MD/config.yaml" <<'YAML'
 # Config globale du site
-# repo et url : laissés vides, ils sont déduits de l'URL github.io
+# Nom affiché dans le header
+titre: Mes notes
+# Dépôt GitHub "compte/repo" : vide = déduit de l'URL github.io
 repo:
-url:
+# Chemin de ce dossier dans le dépôt (pour l'API GitHub)
+dossier: app/md
 # Thèmes ou pages à ne pas afficher (tout est affiché par défaut)
 hidden: []
 YAML
