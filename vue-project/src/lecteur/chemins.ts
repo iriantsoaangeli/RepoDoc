@@ -7,6 +7,16 @@ export const mdUrl = (chemin: string): string =>
 /** Joint des morceaux de chemin en ignorant les vides : ('', 'a', 'b.md') → 'a/b.md' */
 export const joindre = (...parts: string[]): string => parts.filter(Boolean).join('/')
 
+/** Résout un chemin relatif depuis un dossier : ('a/b', '../c.md') → 'a/c.md' */
+export const resoudre = (dossier: string, relatif: string): string => {
+  const parts = dossier ? dossier.split('/') : []
+  for (const p of relatif.split('/')) {
+    if (p === '..') parts.pop()
+    else if (p && p !== '.') parts.push(p)
+  }
+  return parts.join('/')
+}
+
 /** "01-couche-4" → "Couche 4", "mon_fichier.md" → "Mon fichier" */
 export const libelle = (nom: string): string => {
   const propre = nom

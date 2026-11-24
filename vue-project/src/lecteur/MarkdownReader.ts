@@ -1,6 +1,6 @@
 // Lit le contenu : la liste des fichiers de app/md, puis chaque page .md.
-import { headings, lex, type Heading, type Token } from '@/markdown'
-import { mdUrl } from './chemins'
+import { headings, lex, walkTokens, type Heading, type Token } from '@/markdown'
+import { mdUrl, resoudre } from './chemins'
 
 /**
  * Liste des fichiers de app/md (chemins relatifs : "reseaux/01-couche-4/tcp.md").
@@ -46,11 +46,37 @@ export interface PageLue {
   toc: Heading[]
 }
 
-/** Lit une page : chemin relatif sans .md ("reseaux/01-couche-4/tcp") */
-export const lirePage = async (chemin: string): Promise<PageLue> => {
+/**
+ * Réécrit les liens relatifs d'une page pour qu'ils marchent dans le site :
+ *   "udp.md#x" → "#/reseaux/01-couche-4/udp#x"   (autre page)
+ *   "#x"       → "#/<route>#x"                    (titre de la page)
+ *   "schema.png", "doc.pdf" → URL du fichier dans app/md
+ */
+const reecrireLiens = (tokens: Token[], chemin: string, route: string) => {
+  const dossier = chemin.split('/').slice(0, -1).join('/')
+  walkTokens(tokens, (t) => {
+    if (t.type !== 'link' && t.type !== 'image') return
+    const href: string = t.href
+    // URL complète (http:, mailto:…) ou absolue : laissée telle quelle
+    if (!href || /^([a-z][a-z0-9+.-]*:|\/)/i.test(href)) return
+    const [relatif = '', ancre] = href.split('#')
+    const suffixe = ancre ? `#${ancre}` : ''
+    if (!relatif) t.href = `#${encodeURI(route)}${suffixe}`
+    else if (t.type === 'link' && relatif.endsWith('.md'))
+      t.href = `#/${encodeURI(resoudre(dossier, decodeURI(relatif)).replace(/\.md$/, ''))}${suffixe}`
+    else t.href = mdUrl(resoudre(dossier, decodeURI(relatif)))
+  })
+}
+
+/**
+ * Lit une page : chemin relatif sans .md ("reseaux/01-couche-4/tcp").
+ * `route` = route où la page est affichée (pour les liens #titre), par défaut /chemin.
+ */
+export const lirePage = async (chemin: string, route = `/${chemin}`): Promise<PageLue> => {
   const rep = await fetch(mdUrl(`${chemin}.md`))
   if (!rep.ok) throw new Error(`Page introuvable : ${chemin}.md`)
   const tokens = lex(await rep.text()).filter((t, i) => !(i === 0 && t.type === 'space'))
+  reecrireLiens(tokens, chemin, route)
   let titre: string | undefined
   const premier = tokens[0]
   if (premier?.type === 'heading' && premier.depth === 1) {

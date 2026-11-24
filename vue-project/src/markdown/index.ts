@@ -1,14 +1,29 @@
 // Outils Markdown : découpe un .md en blocs (tokens marked) et en tire les titres.
-import { Lexer, Parser, type Token, type Tokens } from 'marked'
+import { Lexer, Parser, Renderer, walkTokens, type Token, type Tokens } from 'marked'
 
 export type { Token, Tokens }
+export { walkTokens }
+
+/** Rendu HTML : les liens externes (http, https) s'ouvrent dans un nouvel onglet */
+class RenduLiens extends Renderer {
+  override link(token: Tokens.Link): string {
+    const html = super.link(token)
+    return /^https?:\/\//.test(token.href)
+      ? html.replace('<a ', '<a target="_blank" rel="noopener" ')
+      : html
+  }
+}
+const options = { renderer: new RenduLiens() }
 
 /** Découpe le texte Markdown en blocs (titre, paragraphe, tableau, code, liste…) */
 export const lex = (md: string): Token[] => Lexer.lex(md)
 
 /** Transforme le contenu en ligne d'un bloc (gras, liens, `code`…) en HTML */
 export const inline = (tokens: Token[] | undefined, fallback = ''): string =>
-  tokens ? Parser.parseInline(tokens) : fallback
+  tokens ? Parser.parseInline(tokens, options) : fallback
+
+/** Transforme des blocs entiers en HTML (blocs sans composant dédié) */
+export const blocs = (tokens: Token[]): string => Parser.parse(tokens, options)
 
 /** "Poignée de main !" → "poignee-de-main" */
 export const slug = (text: string): string =>
