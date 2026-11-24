@@ -1,0 +1,6 @@
+# Config globale du site
+# repo et url : laissés vides, ils sont déduits de l'URL github.io
+repo:
+url:
+# Thèmes ou pages à ne pas afficher (tout est affiché par défaut)
+hidden: []
