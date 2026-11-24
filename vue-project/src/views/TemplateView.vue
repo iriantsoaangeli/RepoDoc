@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Page de vérification : reproduit template/template.html avec les composants.
 // Le contenu des slots est encore statique, il viendra du .md plus tard.
-import { IonPage } from '@ionic/vue'
 import DocLayout from '@/components/DocLayout.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import SideBar from '@/components/SideBar.vue'
@@ -10,12 +9,12 @@ import MdBlocks from '@/components/md/MdBlocks.vue'
 import { headings, lex } from '@/markdown'
 import type { NavLink, SideItem } from '@/types'
 
-const brand: NavLink = { label: 'Mes notes', to: '/template' }
+const brand: NavLink = { label: 'Mes notes', to: '/_template' }
 const themes: NavLink[] = [
-  { label: 'Accueil', to: '/template?t=accueil' },
-  { label: 'Réseaux', to: '/template?t=reseaux', active: true },
-  { label: 'Python', to: '/template?t=python' },
-  { label: 'Linux', to: '/template?t=linux' },
+  { label: 'Accueil', to: '/_template?t=accueil' },
+  { label: 'Réseaux', to: '/_template?t=reseaux', active: true },
+  { label: 'Python', to: '/_template?t=python' },
+  { label: 'Linux', to: '/_template?t=linux' },
 ]
 
 // Plus tard : lu depuis la config globale (champ repo)
@@ -68,14 +67,14 @@ Voir aussi la [RFC 793](https://www.rfc-editor.org/rfc/rfc793).
 const tokens = lex(md)
 const toc: SideItem[] = headings(tokens).map((h) => ({ label: h.label, to: `#${h.id}`, level: h.level }))
 const pages: SideItem[] = [
-  { label: 'Introduction', to: '/template?p=intro' },
-  { label: 'TCP', to: '/template', active: true },
-  { label: 'UDP', to: '/template?p=udp' },
+  { label: 'Introduction', to: '/_template?p=intro' },
+  { label: 'TCP', to: '/_template', active: true },
+  { label: 'UDP', to: '/_template?p=udp' },
 ]
 </script>
 
 <template>
-  <IonPage>
+  <div class="ion-page">
     <SiteHeader :brand="brand" :themes="themes" />
 
     <DocLayout>
@@ -97,5 +96,5 @@ const pages: SideItem[] = [
         <SiteFooter :repo="repo" />
       </template>
     </DocLayout>
-  </IonPage>
+  </div>
 </template>
