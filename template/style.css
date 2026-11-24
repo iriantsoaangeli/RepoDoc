@@ -74,6 +74,10 @@ ion-menu { --width: 290px; --max-width: 85vw; }
 .pages-col a:hover { background: var(--bg-soft); color: var(--hover); text-decoration: none; }
 .pages-col a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
+/* Leçons pliables (ion-accordion) : pages décalées sous le titre de la leçon */
+.pages-col ion-accordion .side-list { padding-left: 12px; }
+.pages-col ion-item { --padding-start: 10px; --min-height: 38px; font-size: 16px; }
+
 /* Table des matières de la page */
 .toc { font-size: 15px; }
 .toc a { display: block; padding: 4px 8px; color: var(--muted); border-left: 2px solid transparent; }
