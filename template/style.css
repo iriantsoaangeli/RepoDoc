@@ -182,7 +182,7 @@ pre:hover .copy-btn, .copy-btn:focus { opacity: 1; }
 @media (max-width: 991.98px) {
   .brand { display: none; }
   .site-header { padding: 0 4px; }
-  .etat-reseau .etat-cache { display: none; } /* détail dans l'infobulle */
+  .etat-reseau .etat-detail { display: none; } /* précision dans l'infobulle */
   .toc { border-bottom: 1px solid var(--border); }
   #main { --background: var(--bg); }
   .content { width: 100%; margin: 0; box-shadow: none; padding: 20px 18px 60px; }

@@ -4,8 +4,8 @@
 //   - application (html, js, css) : mise en cache à l'installation, servie depuis le cache
 //   - app/md/… (pages, config, images, PDF) : servie depuis le cache « contenu »,
 //     rempli par l'application (lecteur/HorsLigne.ts) et, pour un PDF, à sa première ouverture
-const VERSION = 'd50424ad18'
-const FICHIERS = ["./","index.html","app/html/","app/html/favicon.svg","app/html/assets/index-BKzCTlo0.js","app/html/assets/IndexView-C4Cw1u4q.js","app/html/assets/MdBlocks-CFU17swG.js","app/html/assets/PageView-CyelCa-v.js","app/html/assets/p-BmVRXR1y-tEpWjZ2F.js","app/html/assets/p-C5zGntuD-TOGf5xbJ.js","app/html/assets/p-C8n1kmjg-BHhF0Vao.js","app/html/assets/p-CCpvdQ1F-SqLXAz5f.js","app/html/assets/p-CmDwAGfM-Btf9N8tx.js","app/html/assets/p-CyKwPay6-4R6fmI_T.js","app/html/assets/p-D0YpjgON-7MWMj91H.js","app/html/assets/p-D7-vHX0A-1yDKnD1t.js","app/html/assets/p-D9uVfgmC-BtQk0nfF.js","app/html/assets/p-Dj4J3LkD-CdWAa8ga.js","app/html/assets/p-ZjP4CjeZ-DJ1DGIsW.js","app/html/assets/index-D4vN2k89.css","app/html/index.html"]
+const VERSION = 'c88bd94616'
+const FICHIERS = ["./","index.html","app/html/","app/html/favicon.svg","app/html/assets/index-Ch-LaGar.js","app/html/assets/IndexView-CJC_TO-V.js","app/html/assets/MdBlocks-CCBOR5y8.js","app/html/assets/PageView-CAu3XxoK.js","app/html/assets/p-BmVRXR1y-tEpWjZ2F.js","app/html/assets/p-C5zGntuD-ZJtkI9n4.js","app/html/assets/p-C8n1kmjg-CakVMyE4.js","app/html/assets/p-CCpvdQ1F-CGxexooy.js","app/html/assets/p-CmDwAGfM-BYIIwPta.js","app/html/assets/p-CyKwPay6-4R6fmI_T.js","app/html/assets/p-D0YpjgON-CttKHuav.js","app/html/assets/p-D7-vHX0A-CwExpwxK.js","app/html/assets/p-D9uVfgmC-CkcUDlFM.js","app/html/assets/p-Dj4J3LkD-CdWAa8ga.js","app/html/assets/p-ZjP4CjeZ-DJ1DGIsW.js","app/html/assets/index-B_uyOC9-.css","app/html/index.html"]
 const APP = `app-${VERSION}`
 const CONTENU = 'contenu' // même nom que dans HorsLigne.ts
 const DOSSIER_MD = new URL('app/md/', self.registration.scope).href
