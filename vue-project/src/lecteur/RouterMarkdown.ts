@@ -5,12 +5,13 @@ import type { NavLink } from '@/types'
 import { comparer, joindre, libelle } from './chemins'
 import { lireConfig, resoudreRepo, type Config } from './LecteurConfig'
 import { lireArbre } from './MarkdownReader'
+import { initialiser } from './MdRouter'
 
 export interface Page {
   /** Chemin dans app/md, sans .md : "reseaux/01-couche-4/tcp" */
   chemin: string
   label: string
-  /** Route Vue : "/reseaux/01-couche-4/tcp" */
+  /** Route Vue = chemin du fichier : "/reseaux/01-couche-4/tcp.md" */
   route: string
 }
 
@@ -63,7 +64,7 @@ const estCache = (chemin: string, configs: Map<string, Config>): boolean =>
 const nouvellePage = (chemin: string, nom: string): Page => ({
   chemin,
   label: libelle(nom),
-  route: `/${chemin}`,
+  route: `/${chemin}.md`,
 })
 
 /** Range les fichiers .md dans thèmes / leçons / pages */
@@ -123,6 +124,7 @@ export const chargerSite = async (): Promise<void> => {
     dossiers.forEach((d, i) => configs.set(d, lues[i]!))
 
     const { intro, themes } = construire(arbre, configs)
+    initialiser(themes, arbre)
     etat.site = { titre: globale.titre ?? 'Documentation', repo, intro, themes }
   } catch (e) {
     etat.erreur = e instanceof Error ? e.message : String(e)
@@ -145,20 +147,6 @@ export const pagesOrdonnees = (theme: Theme): Page[] => [
 
 /** Première page d'une leçon (son intro si elle existe) */
 export const entreeLecon = (lecon: Lecon): Page | undefined => lecon.intro ?? lecon.pages[0]
-
-/** Retrouve une page depuis la route /theme/... */
-export const trouverPage = (site: Site, themeSlug: string, chemin: string[]) => {
-  const theme = site.themes.find((t) => t.slug === themeSlug)
-  if (!theme) return undefined
-  const cible = [themeSlug, ...chemin].join('/')
-  const lecon = theme.lecons.find((l) => l.slug === chemin[0] && chemin.length === 2)
-  const page = pagesOrdonnees(theme).find((p) => p.chemin === cible)
-  return page ? { theme, lecon, page } : undefined
-}
-
-/** Retrouve une leçon depuis la route /theme/lecon */
-export const trouverLecon = (site: Site, themeSlug: string, leconSlug: string) =>
-  site.themes.find((t) => t.slug === themeSlug)?.lecons.find((l) => l.slug === leconSlug)
 
 /** Leçon qui contient la page (undefined pour une page posée directement dans le thème) */
 export const leconDe = (theme: Theme, page: Page): Lecon | undefined =>

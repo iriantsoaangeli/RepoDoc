@@ -2,7 +2,7 @@
 // Une page .md : table des matières à gauche, leçons du thème à droite,
 // fil d'Ariane, contenu, précédent / suivant.
 import { computed, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import DocLayout from '@/components/DocLayout.vue'
 import LeconsBar from '@/components/LeconsBar.vue'
 import SideBar from '@/components/SideBar.vue'
@@ -10,41 +10,28 @@ import SiteFooter from '@/components/SiteFooter.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import MdBlocks from '@/components/md/MdBlocks.vue'
 import { lirePage, type PageLue } from '@/lecteur/MarkdownReader'
+import { trouver } from '@/lecteur/MdRouter'
 import {
   entreeLecon,
   leconDe,
   pagesOrdonnees,
   themesHeader,
-  trouverLecon,
-  trouverPage,
   useSite,
   type Page,
 } from '@/lecteur/RouterMarkdown'
 
-const props = defineProps<{ theme: string; chemin: string[] }>()
+/** chemin = fichier demandé, "reseaux/01-couche-4/tcp.md" */
+const props = defineProps<{ chemin: string }>()
 const etat = useSite()
 const site = computed(() => etat.site!)
 const route = useRoute()
-const router = useRouter()
 const layout = ref<InstanceType<typeof DocLayout>>()
 
-const themeCourant = computed(() => site.value.themes.find((t) => t.slug === props.theme))
-const trouve = computed(() => trouverPage(site.value, props.theme, props.chemin))
-const lecon = computed(() => trouve.value && leconDe(trouve.value.theme, trouve.value.page))
-
-// URL d'une leçon (/theme/lecon) : on ouvre sa première page
-const leconSeule = computed(() =>
-  !trouve.value && props.chemin.length === 1
-    ? trouverLecon(site.value, props.theme, props.chemin[0]!)
-    : undefined,
-)
-watch(
-  leconSeule,
-  (l) => {
-    const entree = l && entreeLecon(l)
-    if (entree) router.replace(entree.route)
-  },
-  { immediate: true },
+const trouve = computed(() => trouver(props.chemin))
+const lecon = computed(() => trouve.value?.lecon)
+// Thème de la page, ou celui du début de l'URL quand la page est introuvable
+const themeCourant = computed(
+  () => trouve.value?.theme ?? site.value.themes.find((t) => t.slug === props.chemin.split('/')[0]),
 )
 
 // Précédent / suivant dans l'ordre du thème
@@ -68,10 +55,8 @@ watch(
     lue.value = undefined
     erreur.value = ''
     if (!page) {
-      if (!leconSeule.value) {
-        document.title = 'Page introuvable'
-        layout.value?.positionner()
-      }
+      document.title = 'Page introuvable'
+      layout.value?.positionner()
       return
     }
     try {
@@ -88,7 +73,7 @@ watch(
 
 <template>
   <div class="ion-page">
-    <SiteHeader :brand="{ label: site.titre, to: '/' }" :themes="themesHeader(site, props.theme)" />
+    <SiteHeader :brand="{ label: site.titre, to: '/' }" :themes="themesHeader(site, themeCourant?.slug)" />
 
     <DocLayout ref="layout">
       <template #toc="{ actif }">
@@ -126,7 +111,7 @@ watch(
             ›
             <!-- Leçon sans intro : son entrée est la page affichée, pas de lien vers soi-même -->
             <template v-if="entreeLecon(lecon) === trouve.page">{{ lecon.label }}</template>
-            <RouterLink v-else :to="`${trouve.theme.route}/${lecon.slug}`">{{
+            <RouterLink v-else :to="entreeLecon(lecon)!.route">{{
               lecon.label
             }}</RouterLink>
           </template>

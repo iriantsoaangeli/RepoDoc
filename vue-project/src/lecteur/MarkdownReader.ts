@@ -1,6 +1,7 @@
 // Lit le contenu : la liste des fichiers de app/md, puis chaque page .md.
 import { headings, lex, walkTokens, type Heading, type Token } from '@/markdown'
 import { mdUrl, resoudre } from './chemins'
+import { routeDuLien } from './MdRouter'
 
 /**
  * Liste des fichiers de app/md (chemins relatifs : "reseaux/01-couche-4/tcp.md").
@@ -47,32 +48,27 @@ export interface PageLue {
 }
 
 /**
- * Réécrit les liens relatifs d'une page pour qu'ils marchent dans le site :
- *   "udp.md#x" → "#/reseaux/01-couche-4/udp#x"   (autre page)
- *   "#x"       → "#/<route>#x"                    (titre de la page)
- *   "schema.png", "doc.pdf" → URL du fichier dans app/md
+ * Réécrit les liens d'une page pour qu'ils marchent dans le site (voir MdRouter) :
+ *   "udp.md#x" → "#/reseaux/01-couche-4/udp.md#x"   (autre page)
+ *   "#x"       → "#/<route>#x"                       (titre de la page)
+ *   "doc.pdf"  → URL du fichier dans app/md
+ *   lien qui ne mène à rien → href vide, affiché comme du texte
+ * Les images pointent vers leur fichier dans app/md.
  */
 const reecrireLiens = (tokens: Token[], chemin: string, route: string) => {
   const dossier = chemin.split('/').slice(0, -1).join('/')
   walkTokens(tokens, (t) => {
-    if (t.type !== 'link' && t.type !== 'image') return
-    const href: string = t.href
-    // URL complète (http:, mailto:…) ou absolue : laissée telle quelle
-    if (!href || /^([a-z][a-z0-9+.-]*:|\/)/i.test(href)) return
-    const [relatif = '', ancre] = href.split('#')
-    const suffixe = ancre ? `#${ancre}` : ''
-    if (!relatif) t.href = `#${encodeURI(route)}${suffixe}`
-    else if (t.type === 'link' && relatif.endsWith('.md'))
-      t.href = `#/${encodeURI(resoudre(dossier, decodeURI(relatif)).replace(/\.md$/, ''))}${suffixe}`
-    else t.href = mdUrl(resoudre(dossier, decodeURI(relatif)))
+    if (t.type === 'link') t.href = routeDuLien(dossier, t.href, route) ?? ''
+    else if (t.type === 'image' && t.href && !/^([a-z][a-z0-9+.-]*:|\/)/i.test(t.href))
+      t.href = mdUrl(resoudre(dossier, decodeURI(t.href)))
   })
 }
 
 /**
  * Lit une page : chemin relatif sans .md ("reseaux/01-couche-4/tcp").
- * `route` = route où la page est affichée (pour les liens #titre), par défaut /chemin.
+ * `route` = route où la page est affichée (pour les liens #titre), par défaut /chemin.md.
  */
-export const lirePage = async (chemin: string, route = `/${chemin}`): Promise<PageLue> => {
+export const lirePage = async (chemin: string, route = `/${chemin}.md`): Promise<PageLue> => {
   const rep = await fetch(mdUrl(`${chemin}.md`))
   if (!rep.ok) throw new Error(`Page introuvable : ${chemin}.md`)
   const tokens = lex(await rep.text()).filter((t, i) => !(i === 0 && t.type === 'space'))

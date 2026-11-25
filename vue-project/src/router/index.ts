@@ -9,8 +9,14 @@ const router = createRouter({
     // Sommaire général, puis sommaire d'un thème
     { path: '/', component: () => import('../views/IndexView.vue') },
     { path: '/:theme', component: () => import('../views/IndexView.vue'), props: true },
-    // Une page : /theme/page ou /theme/lecon/page
-    { path: '/:theme/:chemin+', component: () => import('../views/PageView.vue'), props: true },
+    // Une page : route = chemin du fichier, /theme/page.md ou /theme/lecon/page.md
+    { path: '/:chemin(.*\\.md)', component: () => import('../views/PageView.vue'), props: true },
+    // Tout le reste : page introuvable
+    {
+      path: '/:pathMatch(.*)*',
+      component: () => import('../views/PageView.vue'),
+      props: (r) => ({ chemin: ([] as string[]).concat(r.params.pathMatch ?? []).join('/') }),
+    },
   ],
 })
 
