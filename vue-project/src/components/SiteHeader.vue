@@ -1,10 +1,12 @@
 <script setup lang="ts">
-// Header du site : bouton menu (mobile), nom du site, liste des thèmes, bouton recharger.
+// Header du site : bouton menu (mobile), nom du site, liste des thèmes,
+// badge connexion / cache hors ligne, bouton recharger.
 // IonMenuButton se cache tout seul quand les colonnes sont visibles (ordinateur).
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonToolbar } from '@ionic/vue'
 import { refreshOutline } from 'ionicons/icons'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import EtatReseau from '@/components/EtatReseau.vue'
 import type { NavLink } from '@/types'
 
 const props = defineProps<{
@@ -54,6 +56,7 @@ onBeforeUnmount(() => observateur.disconnect())
       </div>
       <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
       <IonButtons slot="end">
+        <EtatReseau />
         <!-- Affiche les pages poussées depuis l'ouverture du site -->
         <IonButton
           title="Recharger le contenu"

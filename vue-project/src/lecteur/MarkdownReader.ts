@@ -1,6 +1,7 @@
 // Lit le contenu : la liste des fichiers de app/md, puis chaque page .md.
 import { headings, lex, walkTokens, type Heading, type Token } from '@/markdown'
 import { mdUrl } from './chemins'
+import { enLigne } from './HorsLigne'
 import { routeDuLien } from './MdRouter'
 
 /** Un fichier de app/md, et son empreinte git (change quand le fichier change ; vide en dev) */
@@ -42,9 +43,11 @@ export const lireArbre = async (repo: string, dossier: string): Promise<Fichier[
     )
   } catch {
     // Hors ligne
+    enLigne.value = false
     if (copie) return copie.fichiers
     throw new Error("Pas de connexion, et le site n'a encore jamais été ouvert sur cet appareil.")
   }
+  enLigne.value = true
   if (rep.status === 304 && copie) return copie.fichiers
   if (!rep.ok) {
     if (copie) return copie.fichiers

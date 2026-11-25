@@ -57,6 +57,15 @@ ion-toolbar { --min-height: var(--header-h); --padding-start: 8px; --padding-end
 .themes a.active { color: var(--nav-active); background: var(--accent-soft); opacity: 1; font-weight: 600; }
 .themes a.active { box-shadow: inset 0 -3px 0 var(--orange); }
 
+/* Badge connexion / cache hors ligne (EtatReseau.vue) */
+.etat-reseau {
+  display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; padding: 4px 10px;
+  border-radius: 999px; background: rgba(255, 255, 255, .15); color: var(--nav-text);
+  font-size: 13px; white-space: nowrap;
+}
+.etat-reseau .pastille { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; }
+.etat-reseau.hors-ligne .pastille { background: var(--orange); }
+
 /* ---------- Layout : ion-split-pane = titres | contenu | pages ---------- */
 .doc-body { position: relative; flex: 1; }
 ion-split-pane {
@@ -173,6 +182,7 @@ pre:hover .copy-btn, .copy-btn:focus { opacity: 1; }
 @media (max-width: 991.98px) {
   .brand { display: none; }
   .site-header { padding: 0 4px; }
+  .etat-reseau .etat-cache { display: none; } /* détail dans l'infobulle */
   .toc { border-bottom: 1px solid var(--border); }
   #main { --background: var(--bg); }
   .content { width: 100%; margin: 0; box-shadow: none; padding: 20px 18px 60px; }
