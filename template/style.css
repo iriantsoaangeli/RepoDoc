@@ -13,6 +13,8 @@
   --ion-font-family: var(--font);
   --ion-background-color: var(--bg);
   --ion-text-color: var(--text);
+  /* Version r,g,b de --text : Ionic s'en sert pour ses icônes (sinon noir) */
+  --ion-text-color-rgb: 53, 56, 51;
   --ion-border-color: var(--border);
   --ion-toolbar-background: var(--nav-bg);
   --ion-toolbar-color: var(--nav-text);
@@ -26,6 +28,9 @@
     --hover: #f0a54a;
     --nav-bg: #2c4558; --nav-hover: #3b5a72; --nav-active: #d7dae0;
     --code-bg: #2a2f36; --desk: #14171b;
+    --ion-text-color-rgb: 215, 218, 224;
+    /* Barres de défilement et contrôles natifs en sombre */
+    color-scheme: dark;
   }
 }
 
@@ -78,6 +83,7 @@ ion-menu { --width: 290px; --max-width: 85vw; }
 /* Leçons pliables (ion-accordion) : pages décalées sous le titre de la leçon */
 .pages-col ion-accordion .side-list { padding-left: 12px; }
 .pages-col ion-item { --padding-start: 10px; --min-height: 38px; font-size: 16px; }
+.pages-col .ion-accordion-toggle-icon { color: var(--muted); }
 
 /* Table des matières de la page */
 .toc { font-size: 15px; }
