@@ -1,4 +1,4 @@
-Voir aussi : [Une ORB, c'est quoi ?](../../termes-techniques/Une%20ORB,%20c'est%20quoi.md)
+Voir aussi : [Une ORB, c'est quoi ?](../termes-techniques/Une%20ORB,%20c'est%20quoi.md)
 
 ## 1. Ce que fait omniidl
 

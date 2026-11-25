@@ -1,3 +1,3 @@
 # Cours
 
-Notes de cours : architecture web, gestion, multimédia et réseau.
+Notes de cours : architecture web, gestion des ressources humaines, multimédia.
