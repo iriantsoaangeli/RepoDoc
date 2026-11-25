@@ -4,6 +4,7 @@ import { reactive } from 'vue'
 import type { NavLink } from '@/types'
 import { comparer, joindre, libelle, pageDe, pagesDe, type Page } from './chemins'
 import { lireConfig, resoudreRepo, type Config } from './LecteurConfig'
+import { synchroniser } from './HorsLigne'
 import { lireArbre } from './MarkdownReader'
 import { initialiser } from './MdRouter'
 
@@ -99,15 +100,19 @@ export const chargerSite = async (): Promise<void> => {
     // Configs des thèmes et leçons présentes dans l'arbre
     const configs = new Map<string, Config>([['', globale]])
     const dossiers = arbre
+      .map((f) => f.chemin)
       .filter((f) => f.endsWith('/config.yaml'))
       .map((f) => f.slice(0, -'/config.yaml'.length))
     const lues = await Promise.all(dossiers.map(lireConfig))
     dossiers.forEach((d, i) => configs.set(d, lues[i]!))
 
     // Fichiers cachés par les config.yaml : absents de la navigation et des liens (PDF compris)
-    const visibles = arbre.filter((f) => !estCache(f, configs))
-    const { intro, themes } = construire(visibles)
-    initialiser(themes, visibles)
+    const visibles = arbre.filter((f) => !estCache(f.chemin, configs))
+    // Prod : cache hors ligne à jour avant d'afficher la moindre page
+    if (import.meta.env.PROD) await synchroniser(visibles)
+    const chemins = visibles.map((f) => f.chemin)
+    const { intro, themes } = construire(chemins)
+    initialiser(themes, chemins)
     etat.site = { titre: globale.titre ?? 'Documentation', repo, intro, themes }
   } catch (e) {
     etat.erreur = e instanceof Error ? e.message : String(e)

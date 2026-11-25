@@ -17,4 +17,4 @@ Une à deux minutes plus tard (le temps que GitHub Pages se mette à jour), la p
 https://<compte>.github.io/<dépôt>/app/html/#/outils/git/SSH.md
 ```
 
-Si elle n'apparaît pas tout de suite, cliquer sur le bouton **⟳ (Recharger le contenu)** en haut à droite du site : la liste des fichiers est gardée en cache pendant la session.
+Si le site était déjà ouvert, cliquer sur le bouton **⟳ (Recharger le contenu)** en haut à droite : la liste des fichiers est revérifiée à chaque ouverture du site.

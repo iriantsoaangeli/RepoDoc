@@ -3,39 +3,64 @@ import { headings, lex, walkTokens, type Heading, type Token } from '@/markdown'
 import { mdUrl } from './chemins'
 import { routeDuLien } from './MdRouter'
 
+/** Un fichier de app/md, et son empreinte git (change quand le fichier change ; vide en dev) */
+export interface Fichier {
+  chemin: string
+  sha: string
+}
+
+/** Lit une valeur JSON de localStorage (absente ou illisible → undefined) */
+const lireStockage = <T>(cle: string): T | undefined => {
+  try {
+    return JSON.parse(localStorage.getItem(cle) ?? 'null') ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Liste des fichiers de app/md (chemins relatifs : "reseaux/01-couche-4/tcp.md").
- * En dev : lu sur le disque par Vite. En prod : API GitHub, mise en cache pour la session.
+ * En dev : lue sur le disque par Vite.
+ * En prod : API GitHub, seulement le dossier du contenu. La liste est gardée dans le navigateur
+ * avec son ETag : à chaque ouverture, la requête est conditionnelle (304 sans contenu si rien
+ * n'a changé, et un 304 ne compte pas dans la limite de l'API). Sans réseau, on lit la copie.
  */
-export const lireArbre = async (repo: string, dossier: string): Promise<string[]> => {
-  if (import.meta.env.DEV) return (await fetch('/__arbre')).json()
+export const lireArbre = async (repo: string, dossier: string): Promise<Fichier[]> => {
+  if (import.meta.env.DEV)
+    return ((await (await fetch('/__arbre')).json()) as string[]).map((chemin) => ({ chemin, sha: '' }))
 
   if (!repo)
     throw new Error('Dépôt GitHub introuvable : renseigner « repo » dans app/md/config.yaml')
   const cle = `arbre:${repo}:${dossier}`
-  const cache = sessionStorage.getItem(cle)
-  if (cache) return JSON.parse(cache)
+  const copie = lireStockage<{ etag: string; fichiers: Fichier[] }>(cle)
 
-  const rep = await fetch(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`)
-  if (rep.status === 403 || rep.status === 429)
-    throw new Error("Limite de l'API GitHub atteinte, réessayez dans quelques minutes.")
-  if (!rep.ok) throw new Error(`API GitHub : erreur ${rep.status} pour ${repo}`)
+  let rep: Response
+  try {
+    rep = await fetch(
+      `https://api.github.com/repos/${repo}/git/trees/HEAD:${encodeURI(dossier.replace(/\/$/, ''))}?recursive=1`,
+      { headers: copie?.etag ? { 'If-None-Match': copie.etag } : {} },
+    )
+  } catch {
+    // Hors ligne
+    if (copie) return copie.fichiers
+    throw new Error("Pas de connexion, et le site n'a encore jamais été ouvert sur cet appareil.")
+  }
+  if (rep.status === 304 && copie) return copie.fichiers
+  if (!rep.ok) {
+    if (copie) return copie.fichiers
+    if (rep.status === 403 || rep.status === 429)
+      throw new Error("Limite de l'API GitHub atteinte, réessayez dans quelques minutes.")
+    throw new Error(`API GitHub : erreur ${rep.status} pour ${repo}`)
+  }
 
-  const { tree } = (await rep.json()) as { tree: { path: string; type: string }[] }
-  const prefixe = `${dossier.replace(/\/$/, '')}/`
-  const arbre = tree
-    .filter((f) => f.type === 'blob' && f.path.startsWith(prefixe))
-    .map((f) => f.path.slice(prefixe.length))
-  sessionStorage.setItem(cle, JSON.stringify(arbre))
-  return arbre
-}
-
-/** Vide le cache de la liste des fichiers puis recharge la page (nouvelles pages poussées) */
-export const rechargerSansCache = (): void => {
-  Object.keys(sessionStorage)
-    .filter((cle) => cle.startsWith('arbre:'))
-    .forEach((cle) => sessionStorage.removeItem(cle))
-  location.reload()
+  const { tree } = (await rep.json()) as { tree: { path: string; type: string; sha: string }[] }
+  const fichiers = tree.filter((f) => f.type === 'blob').map((f) => ({ chemin: f.path, sha: f.sha }))
+  try {
+    localStorage.setItem(cle, JSON.stringify({ etag: rep.headers.get('ETag') ?? '', fichiers }))
+  } catch {
+    // Stockage plein ou interdit : la liste sera redemandée en entier la prochaine fois
+  }
+  return fichiers
 }
 
 export interface PageLue {

@@ -12,7 +12,7 @@ Ensuite, chaque `git push` sur `main` met le site à jour en une à deux minutes
 
 ## Comment le site trouve les fichiers
 
-En ligne, le site demande la liste des fichiers à l'**API GitHub** (une requête au chargement, gardée en cache pendant la session), puis télécharge chaque page depuis GitHub Pages. Conséquences :
+En ligne, le site demande la liste des fichiers du dossier `app/md` à l'**API GitHub**, puis télécharge les pages depuis GitHub Pages. La liste est gardée dans le navigateur : à chaque ouverture, le site demande seulement « a-t-elle changé ? » (réponse vide si non). Conséquences :
 
 - un fichier n'apparaît qu'une fois **poussé** sur `main` ;
-- l'API GitHub limite à **60 requêtes par heure** et par adresse IP. Grâce au cache, c'est largement suffisant pour un usage normal ; en cas de dépassement, le site affiche un message, il suffit d'attendre.
+- l'API GitHub limite à **60 requêtes par heure** et par adresse IP ; une réponse « rien n'a changé » ne compte pas. En cas de dépassement, le site utilise la dernière liste connue, ou affiche un message s'il n'en a pas.

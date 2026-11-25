@@ -20,4 +20,4 @@ Ouvrir l'adresse affichée (en général `http://localhost:5173/`). En local, le
 ./build.sh
 ```
 
-Le script installe les dépendances si besoin, vérifie les types, compile l'application dans `app/html/`, et crée `app/md/config.yaml` s'il n'existe pas (il ne touche jamais au contenu existant). Commiter ensuite `app/html/` avec le reste.
+Le script installe les dépendances si besoin, vérifie les types, compile l'application dans `app/html/`, génère `sw.js` à la racine (le service worker, voir [Hors ligne](08-lire-le-site.md#hors-ligne)), et crée `app/md/config.yaml` s'il n'existe pas (il ne touche jamais au contenu existant). Commiter ensuite `app/html/` et `sw.js` avec le reste.

@@ -5,7 +5,6 @@ import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonToolbar } 
 import { refreshOutline } from 'ionicons/icons'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { rechargerSansCache } from '@/lecteur/MarkdownReader'
 import type { NavLink } from '@/types'
 
 const props = defineProps<{
@@ -14,6 +13,9 @@ const props = defineProps<{
 }>()
 
 const nav = ref<HTMLElement>()
+
+// La liste des fichiers est revérifiée à chaque ouverture : recharger suffit après un push
+const recharger = () => location.reload()
 
 // Petit écran : centre le thème actif dans la liste des thèmes (qui défile en largeur)
 const centrerActif = async () => {
@@ -52,11 +54,11 @@ onBeforeUnmount(() => observateur.disconnect())
       </div>
       <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
       <IonButtons slot="end">
-        <!-- Vide le cache de la liste des fichiers : affiche les pages poussées depuis -->
+        <!-- Affiche les pages poussées depuis l'ouverture du site -->
         <IonButton
           title="Recharger le contenu"
           aria-label="Recharger le contenu"
-          @click="rechargerSansCache"
+          @click="recharger"
         >
           <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
           <IonIcon slot="icon-only" :icon="refreshOutline" />

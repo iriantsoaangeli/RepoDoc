@@ -1,4 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
@@ -53,14 +54,47 @@ const mdLocal = (): Plugin => ({
   },
 })
 
+/**
+ * Au build : écrit sw.js à la racine du dépôt (portée = tout le site, PDF des iframes compris),
+ * depuis le modèle ./sw.js, avec la liste des fichiers de l'application à mettre en cache.
+ * La version change avec la liste : chaque déploiement installe un nouveau service worker.
+ */
+const serviceWorker = (): Plugin => ({
+  name: 'service-worker',
+  apply: 'build',
+  writeBundle(_options, bundle) {
+    // Chemins relatifs à la racine du dépôt (outDir = app/html)
+    const fichiers = [
+      './',
+      'index.html',
+      'app/html/',
+      'app/html/favicon.svg',
+      ...Object.keys(bundle).map((f) => `app/html/${f}`),
+    ]
+    const version = createHash('sha1').update(fichiers.join()).digest('hex').slice(0, 10)
+    const modele = readFileSync(fileURLToPath(new URL('./sw.js', import.meta.url)), 'utf8')
+    writeFileSync(
+      fileURLToPath(new URL('../sw.js', import.meta.url)),
+      modele.replace('__VERSION__', version).replace('__FICHIERS__', JSON.stringify(fichiers)),
+    )
+  },
+})
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueDevTools(), mdLocal()],
+  plugins: [vue(), vueDevTools(), mdLocal(), serviceWorker()],
   // Chemins relatifs : le site marche quel que soit le nom du dépôt GitHub
   base: './',
   build: {
     outDir: '../app/html',
     emptyOutDir: true,
+    rolldownOptions: {
+      treeshake: {
+        // @ionic/core ne déclare pas « sideEffects » : sans ça, tous ses composants sont embarqués
+        // (datetime, select, input…), même inutilisés. 298 Ko → 132 Ko compressés.
+        moduleSideEffects: (id) => !/@ionic\/core\/components\//.test(id),
+      },
+    },
   },
   server: {
     // Autorise l'import de ../template/style.css

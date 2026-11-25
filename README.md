@@ -18,6 +18,7 @@ Site en ligne : `https://<compte>.github.io/<dépôt>/`
 - [Cacher une page ou un dossier](#cacher-une-page-ou-un-dossier)
 - [Configuration globale](#configuration-globale)
 - [Lire le site](#lire-le-site)
+- [Hors ligne](#hors-ligne)
 - [Travailler en local](#travailler-en-local)
 - [Publier sur GitHub Pages](#publier-sur-github-pages)
 - [Dépannage](#dépannage)
@@ -44,7 +45,7 @@ Une à deux minutes plus tard (le temps que GitHub Pages se mette à jour), la p
 https://<compte>.github.io/<dépôt>/app/html/#/outils/git/SSH.md
 ```
 
-Si elle n'apparaît pas tout de suite, cliquer sur le bouton **⟳ (Recharger le contenu)** en haut à droite du site : la liste des fichiers est gardée en cache pendant la session.
+Si le site était déjà ouvert, cliquer sur le bouton **⟳ (Recharger le contenu)** en haut à droite : la liste des fichiers est revérifiée à chaque ouverture du site.
 
 ---
 
@@ -277,7 +278,7 @@ hidden: []
 | **Colonne de droite** | pages du thème, leçons pliables (celle de la page ouverte est dépliée) |
 | **Fil d'Ariane** | Thème › Leçon › Page |
 | **Précédent / Suivant** | en bas de page, dans l'ordre du thème |
-| **⟳** | recharge la liste des fichiers (après un `git push`) |
+| **⟳** | recharge le site : affiche les pages poussées depuis son ouverture |
 | **Mode sombre** | suit le réglage du système |
 
 Sur mobile, les deux colonnes sont dans le menu **☰**.
@@ -295,6 +296,16 @@ L'adresse d'une page est le **chemin de son fichier** :
 ```
 
 Pour partager une section avec quelqu'un, cliquer sur le titre dans « Sur cette page » puis copier l'adresse.
+
+
+## Hors ligne
+
+Le site reste **lisible sans internet** dès la première visite :
+
+- à la première ouverture, l'application et **toutes les pages** sont gardées dans le navigateur, en arrière-plan (quelques dizaines de Ko) ;
+- un **PDF** est gardé quand on l'ouvre : il reste lisible hors ligne ensuite, mais un PDF jamais ouvert ne l'est pas ;
+- aux visites suivantes, **rien n'est retéléchargé** tant que rien n'a changé : seule une page modifiée (ou ajoutée) est récupérée ;
+- une nouvelle version du **code** du site s'applique au rechargement suivant.
 
 ---
 
@@ -320,7 +331,7 @@ Ouvrir l'adresse affichée (en général `http://localhost:5173/`). En local, le
 ./build.sh
 ```
 
-Le script installe les dépendances si besoin, vérifie les types, compile l'application dans `app/html/`, et crée `app/md/config.yaml` s'il n'existe pas (il ne touche jamais au contenu existant). Commiter ensuite `app/html/` avec le reste.
+Le script installe les dépendances si besoin, vérifie les types, compile l'application dans `app/html/`, génère `sw.js` à la racine (le service worker, voir [Hors ligne](#hors-ligne)), et crée `app/md/config.yaml` s'il n'existe pas (il ne touche jamais au contenu existant). Commiter ensuite `app/html/` et `sw.js` avec le reste.
 
 ---
 
@@ -338,10 +349,10 @@ Ensuite, chaque `git push` sur `main` met le site à jour en une à deux minutes
 
 ### Comment le site trouve les fichiers
 
-En ligne, le site demande la liste des fichiers à l'**API GitHub** (une requête au chargement, gardée en cache pendant la session), puis télécharge chaque page depuis GitHub Pages. Conséquences :
+En ligne, le site demande la liste des fichiers du dossier `app/md` à l'**API GitHub**, puis télécharge les pages depuis GitHub Pages. La liste est gardée dans le navigateur : à chaque ouverture, le site demande seulement « a-t-elle changé ? » (réponse vide si non). Conséquences :
 
 - un fichier n'apparaît qu'une fois **poussé** sur `main` ;
-- l'API GitHub limite à **60 requêtes par heure** et par adresse IP. Grâce au cache, c'est largement suffisant pour un usage normal ; en cas de dépassement, le site affiche un message, il suffit d'attendre.
+- l'API GitHub limite à **60 requêtes par heure** et par adresse IP ; une réponse « rien n'a changé » ne compte pas. En cas de dépassement, le site utilise la dernière liste connue, ou affiche un message s'il n'en a pas.
 
 ---
 
@@ -349,7 +360,9 @@ En ligne, le site demande la liste des fichiers à l'**API GitHub** (une requêt
 
 | Symptôme | Cause probable | Solution |
 |---|---|---|
-| Une nouvelle page n'apparaît pas | cache de session, ou déploiement en cours | bouton **⟳**, puis vérifier l'onglet **Actions** |
+| Une nouvelle page n'apparaît pas | site ouvert avant le push, ou déploiement en cours | bouton **⟳**, puis vérifier l'onglet **Actions** |
+| Une modification du code n'apparaît pas | l'ancienne version reste en cache jusqu'au rechargement suivant | recharger la page deux fois |
+| Un PDF ne s'ouvre pas hors ligne | il n'a jamais été ouvert sur cet appareil | l'ouvrir une fois en ligne |
 | « Page introuvable » | fichier déplacé, renommé, caché, ou plus de 3 niveaux | vérifier le chemin et les `hidden` |
 | Un lien s'affiche en texte | aucun fichier ne correspond | vérifier le nom ; un lien avec espaces doit utiliser `%20` ou `<…>` |
 | « API GitHub : erreur 404 » | `repo` mal renseigné dans `config.yaml` | mettre `compte/dépôt`, ou laisser vide |
@@ -378,5 +391,6 @@ En ligne, le site demande la liste des fichiers à l'**API GitHub** (une requêt
 ├── conception/        notes de conception
 ├── build.sh           compile l'application dans app/html/
 ├── index.html         redirection de la racine vers app/html/
+├── sw.js              service worker (généré par build.sh, à commiter)
 └── .nojekyll
 ```

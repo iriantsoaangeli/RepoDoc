@@ -7,7 +7,7 @@
 | **Colonne de droite** | pages du thème, leçons pliables (celle de la page ouverte est dépliée) |
 | **Fil d'Ariane** | Thème › Leçon › Page |
 | **Précédent / Suivant** | en bas de page, dans l'ordre du thème |
-| **⟳** | recharge la liste des fichiers (après un `git push`) |
+| **⟳** | recharge le site : affiche les pages poussées depuis son ouverture |
 | **Mode sombre** | suit le réglage du système |
 
 Sur mobile, les deux colonnes sont dans le menu **☰**.
@@ -25,3 +25,12 @@ L'adresse d'une page est le **chemin de son fichier** :
 ```
 
 Pour partager une section avec quelqu'un, cliquer sur le titre dans « Sur cette page » puis copier l'adresse.
+
+## Hors ligne
+
+Le site reste **lisible sans internet** dès la première visite :
+
+- à la première ouverture, l'application et **toutes les pages** sont gardées dans le navigateur, en arrière-plan (quelques dizaines de Ko) ;
+- un **PDF** est gardé quand on l'ouvre : il reste lisible hors ligne ensuite, mais un PDF jamais ouvert ne l'est pas ;
+- aux visites suivantes, **rien n'est retéléchargé** tant que rien n'a changé : seule une page modifiée (ou ajoutée) est récupérée ;
+- une nouvelle version du **code** du site s'applique au rechargement suivant.
