@@ -5,7 +5,6 @@ export interface NavLink {
   active?: boolean
 }
 
-
 /** Un lien de barre latérale. level (2 ou 3) sert à indenter la table des matières. */
 export interface SideItem extends NavLink {
   level?: number

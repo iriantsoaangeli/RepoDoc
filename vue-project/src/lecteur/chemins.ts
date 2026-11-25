@@ -1,4 +1,13 @@
-// Petits outils partagés par le lecteur : URL des fichiers et libellés.
+// Petits outils partagés par le lecteur : pages, URL des fichiers, libellés.
+
+/** Une page du site : un .md, ou un PDF affiché comme une page */
+export interface Page {
+  /** Fichier dans app/md : "reseaux/01-couche-4/tcp.md" */
+  chemin: string
+  label: string
+  /** Route Vue = chemin du fichier : "/reseaux/01-couche-4/tcp.md" */
+  route: string
+}
 
 /** URL d'un fichier de app/md, relative au site (app/html/ → ../md/) */
 export const mdUrl = (chemin: string): string =>
@@ -7,25 +16,26 @@ export const mdUrl = (chemin: string): string =>
 /** Joint des morceaux de chemin en ignorant les vides : ('', 'a', 'b.md') → 'a/b.md' */
 export const joindre = (...parts: string[]): string => parts.filter(Boolean).join('/')
 
-/** Résout un chemin relatif depuis un dossier : ('a/b', '../c.md') → 'a/c.md' */
-export const resoudre = (dossier: string, relatif: string): string => {
-  const parts = dossier ? dossier.split('/') : []
-  for (const p of relatif.split('/')) {
-    if (p === '..') parts.pop()
-    else if (p && p !== '.') parts.push(p)
-  }
-  return parts.join('/')
-}
-
 /** "01-couche-4" → "Couche 4", "mon_fichier.md" → "Mon fichier" */
 export const libelle = (nom: string): string => {
   const propre = nom
-    .replace(/\.md$/, '')
+    .replace(/\.(md|pdf)$/i, '')
     .replace(/^\d+[-_. ]*/, '')
     .replace(/[-_]+/g, ' ')
     .trim()
   return propre ? propre[0]!.toUpperCase() + propre.slice(1) : nom
 }
+
+/** Page d'un fichier de app/md, libellé tiré du nom du fichier */
+export const pageDe = (chemin: string): Page => ({
+  chemin,
+  label: libelle(chemin.split('/').at(-1)!),
+  route: `/${chemin}`,
+})
+
+/** Pages d'une leçon dans l'ordre de lecture : son intro, puis les autres */
+export const pagesDe = (lecon: { intro?: Page; pages: Page[] }): Page[] =>
+  lecon.intro ? [lecon.intro, ...lecon.pages] : lecon.pages
 
 /** Pour comparer des noms sans tenir compte des majuscules ni des accents : "Récupérer" → "recuperer" */
 export const normaliser = (texte: string): string =>

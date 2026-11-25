@@ -11,14 +11,7 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import MdBlocks from '@/components/md/MdBlocks.vue'
 import { lirePage, type PageLue } from '@/lecteur/MarkdownReader'
 import { trouver } from '@/lecteur/MdRouter'
-import {
-  entreeLecon,
-  leconDe,
-  pagesOrdonnees,
-  themesHeader,
-  useSite,
-  type Page,
-} from '@/lecteur/RouterMarkdown'
+import { entreeLecon, pagesOrdonnees, themesHeader, useSite, type Page } from '@/lecteur/RouterMarkdown'
 
 /** chemin = fichier demandé, "reseaux/01-couche-4/tcp.md" */
 const props = defineProps<{ chemin: string }>()
@@ -43,7 +36,7 @@ const voisins = computed(() => {
 })
 // "Couche 7 · Dns" quand la page voisine est dans une autre leçon
 const libelleVoisin = (page: Page) => {
-  const sa = leconDe(trouve.value!.theme, page)
+  const sa = trouver(page.chemin)?.lecon
   return sa && sa !== lecon.value ? `${sa.label} · ${page.label}` : page.label
 }
 
@@ -54,23 +47,17 @@ watch(
   async (page) => {
     lue.value = undefined
     erreur.value = ''
-    if (!page) {
-      document.title = 'Page introuvable'
-      layout.value?.positionner()
-      return
+    // Un PDF est affiché par le navigateur : rien à lire
+    if (page && !trouve.value!.pdf) {
+      try {
+        lue.value = await lirePage(page.chemin)
+      } catch (e) {
+        erreur.value = e instanceof Error ? e.message : String(e)
+      }
     }
-    // PDF : affiché par le navigateur, rien à lire
-    if (trouve.value!.pdf) {
-      document.title = `${page.label} · ${trouve.value!.theme.label}`
-      layout.value?.positionner()
-      return
-    }
-    try {
-      lue.value = await lirePage(page.chemin)
-      document.title = `${lue.value.titre ?? page.label} · ${trouve.value!.theme.label}`
-    } catch (e) {
-      erreur.value = e instanceof Error ? e.message : String(e)
-    }
+    document.title = page
+      ? `${lue.value?.titre ?? page.label} · ${trouve.value!.theme.label}`
+      : 'Page introuvable'
     layout.value?.positionner()
   },
   { immediate: true },

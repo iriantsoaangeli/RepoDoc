@@ -18,15 +18,9 @@ const nav = ref<HTMLElement>()
 // Petit écran : centre le thème actif dans la liste des thèmes (qui défile en largeur)
 const centrerActif = async () => {
   await nextTick()
-  requestAnimationFrame(() => {
-    const zone = nav.value
-    const actif = zone?.querySelector<HTMLElement>('a.active')
-    if (!zone || !actif) return
-    // Positions à l'écran (offsetLeft serait relatif à la toolbar, pas à la liste)
-    const z = zone.getBoundingClientRect()
-    const a = actif.getBoundingClientRect()
-    zone.scrollLeft += a.left - z.left - (z.width - a.width) / 2
-  })
+  requestAnimationFrame(() =>
+    nav.value?.querySelector('a.active')?.scrollIntoView({ inline: 'center', block: 'nearest' }),
+  )
 }
 watch(() => props.themes.find((t) => t.active)?.to, centrerActif, { immediate: true })
 // La largeur de la liste n'est connue qu'une fois le header rendu (polices, boutons Ionic)

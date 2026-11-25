@@ -2,18 +2,13 @@
 // Fournit l'état partagé (useSite) et les liens pour le header et les sidebars.
 import { reactive } from 'vue'
 import type { NavLink } from '@/types'
-import { comparer, joindre, libelle } from './chemins'
+import { comparer, joindre, libelle, pageDe, pagesDe, type Page } from './chemins'
 import { lireConfig, resoudreRepo, type Config } from './LecteurConfig'
 import { lireArbre } from './MarkdownReader'
 import { initialiser } from './MdRouter'
 
-export interface Page {
-  /** Chemin dans app/md, sans .md : "reseaux/01-couche-4/tcp" */
-  chemin: string
-  label: string
-  /** Route Vue = chemin du fichier : "/reseaux/01-couche-4/tcp.md" */
-  route: string
-}
+export type { Page }
+export { pagesDe }
 
 export interface Lecon {
   slug: string
@@ -50,8 +45,6 @@ const etat = reactive({
 })
 export const useSite = () => etat
 
-const INTRO = 'intro'
-
 /** Vrai si le chemin est caché par l'une des configs (hidden relatif au dossier de la config) */
 const estCache = (chemin: string, configs: Map<string, Config>): boolean =>
   [...configs].some(([dossier, config]) =>
@@ -61,48 +54,36 @@ const estCache = (chemin: string, configs: Map<string, Config>): boolean =>
     }),
   )
 
-const nouvellePage = (chemin: string, nom: string): Page => ({
-  chemin,
-  label: libelle(nom),
-  route: `/${chemin}.md`,
-})
-
 /** Range les fichiers .md dans thèmes / leçons / pages */
-const construire = (arbre: string[], configs: Map<string, Config>) => {
+const construire = (arbre: string[]) => {
   const themes = new Map<string, Theme>()
   let intro: Page | undefined
 
-  const fichiers = arbre.filter((f) => f.endsWith('.md') && !estCache(f, configs)).sort(comparer)
-  for (const fichier of fichiers) {
+  for (const fichier of arbre.filter((f) => f.endsWith('.md')).sort(comparer)) {
     const parts = fichier.split('/')
-    const nom = parts.at(-1)!.replace(/\.md$/, '')
-    const chemin = fichier.replace(/\.md$/, '')
-    const page = nouvellePage(chemin, nom)
+    const page = pageDe(fichier)
+    const estIntro = parts.at(-1) === 'intro.md'
 
     if (parts.length === 1) {
-      if (nom === INTRO) intro = page
+      if (estIntro) intro = page
       continue
     }
     if (parts.length > 3) continue // plus profond que thème/leçon/page : ignoré
 
-    const slug = parts[0]!
-    if (!themes.has(slug))
-      themes.set(slug, { slug, label: libelle(slug), route: `/${slug}`, pages: [], lecons: [] })
-    const theme = themes.get(slug)!
+    const [slug, leconSlug] = parts as [string, string]
+    let theme = themes.get(slug)
+    if (!theme)
+      themes.set(slug, (theme = { slug, label: libelle(slug), route: `/${slug}`, pages: [], lecons: [] }))
 
     if (parts.length === 2) {
-      if (nom === INTRO) theme.intro = page
+      if (estIntro) theme.intro = page
       else theme.pages.push(page)
       continue
     }
 
-    const leconSlug = parts[1]!
     let lecon = theme.lecons.find((l) => l.slug === leconSlug)
-    if (!lecon) {
-      lecon = { slug: leconSlug, label: libelle(leconSlug), pages: [] }
-      theme.lecons.push(lecon)
-    }
-    if (nom === INTRO) lecon.intro = { ...page, label: 'Introduction' }
+    if (!lecon) theme.lecons.push((lecon = { slug: leconSlug, label: libelle(leconSlug), pages: [] }))
+    if (estIntro) lecon.intro = { ...page, label: 'Introduction' }
     else lecon.pages.push(page)
   }
   return { intro, themes: [...themes.values()] }
@@ -123,12 +104,10 @@ export const chargerSite = async (): Promise<void> => {
     const lues = await Promise.all(dossiers.map(lireConfig))
     dossiers.forEach((d, i) => configs.set(d, lues[i]!))
 
-    const { intro, themes } = construire(arbre, configs)
-    // Fichiers cachés par les config.yaml exclus aussi des liens (PDF compris)
-    initialiser(
-      themes,
-      arbre.filter((f) => !estCache(f, configs)),
-    )
+    // Fichiers cachés par les config.yaml : absents de la navigation et des liens (PDF compris)
+    const visibles = arbre.filter((f) => !estCache(f, configs))
+    const { intro, themes } = construire(visibles)
+    initialiser(themes, visibles)
     etat.site = { titre: globale.titre ?? 'Documentation', repo, intro, themes }
   } catch (e) {
     etat.erreur = e instanceof Error ? e.message : String(e)
@@ -146,12 +125,8 @@ export const themesHeader = (site: Site, actif?: string): NavLink[] => [
 /** Toutes les pages d'un thème dans l'ordre de lecture (pour précédent / suivant) */
 export const pagesOrdonnees = (theme: Theme): Page[] => [
   ...theme.pages,
-  ...theme.lecons.flatMap((l) => (l.intro ? [l.intro, ...l.pages] : l.pages)),
+  ...theme.lecons.flatMap(pagesDe),
 ]
 
 /** Première page d'une leçon (son intro si elle existe) */
-export const entreeLecon = (lecon: Lecon): Page | undefined => lecon.intro ?? lecon.pages[0]
-
-/** Leçon qui contient la page (undefined pour une page posée directement dans le thème) */
-export const leconDe = (theme: Theme, page: Page): Lecon | undefined =>
-  theme.lecons.find((l) => l.intro === page || l.pages.includes(page))
+export const entreeLecon = (lecon: Lecon): Page | undefined => pagesDe(lecon)[0]

@@ -4,8 +4,6 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    // Page de vérification des composants
-    { path: '/_template', component: () => import('../views/TemplateView.vue') },
     // Sommaire général, puis sommaire d'un thème
     { path: '/', component: () => import('../views/IndexView.vue') },
     { path: '/:theme', component: () => import('../views/IndexView.vue'), props: true },

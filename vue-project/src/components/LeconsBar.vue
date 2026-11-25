@@ -3,7 +3,7 @@
 // La leçon de la page courante est ouverte par défaut.
 import { IonAccordion, IonAccordionGroup, IonItem, IonLabel } from '@ionic/vue'
 import { RouterLink } from 'vue-router'
-import type { Theme } from '@/lecteur/RouterMarkdown'
+import { pagesDe, type Theme } from '@/lecteur/RouterMarkdown'
 
 defineProps<{
   theme: Theme
@@ -31,7 +31,7 @@ defineProps<{
       </IonItem>
       <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
       <ul slot="content" class="side-list">
-        <li v-for="page in lecon.intro ? [lecon.intro, ...lecon.pages] : lecon.pages" :key="page.route">
+        <li v-for="page in pagesDe(lecon)" :key="page.route">
           <RouterLink :to="page.route" :class="{ active: page.route === actif }">{{ page.label }}</RouterLink>
         </li>
       </ul>

@@ -43,16 +43,8 @@ watch([titre, introuvable], ([t, absent]) => (document.title = absent ? 'Thème 
 
     <DocLayout ref="layout">
       <template #toc>
-        <SideBar
-          title="Thèmes"
-          :items="
-            site.themes.map((t) => ({
-              label: t.label,
-              to: t.route,
-              active: t.slug === props.theme,
-            }))
-          "
-        />
+        <!-- Mêmes liens que le header, sans « Accueil » -->
+        <SideBar title="Thèmes" :items="themesHeader(site, props.theme).slice(1)" />
       </template>
 
       <template v-if="theme" #pages>

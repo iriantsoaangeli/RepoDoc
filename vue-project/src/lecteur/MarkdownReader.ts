@@ -1,6 +1,6 @@
 // Lit le contenu : la liste des fichiers de app/md, puis chaque page .md.
 import { headings, lex, walkTokens, type Heading, type Token } from '@/markdown'
-import { mdUrl, resoudre } from './chemins'
+import { mdUrl } from './chemins'
 import { routeDuLien } from './MdRouter'
 
 /**
@@ -48,29 +48,26 @@ export interface PageLue {
 }
 
 /**
- * Réécrit les liens d'une page pour qu'ils marchent dans le site (voir MdRouter) :
- *   "udp.md#x" → "#/reseaux/01-couche-4/udp.md#x"   (autre page)
- *   "#x"       → "#/<route>#x"                       (titre de la page)
- *   "doc.pdf"  → URL du fichier dans app/md
+ * Réécrit les liens et images d'une page pour qu'ils marchent dans le site (voir MdRouter) :
+ *   "udp.md#x"   → "#/reseaux/01-couche-4/udp.md#x"   (autre page)
+ *   "#x"         → "#/<route>#x"                       (titre de la page)
+ *   "schema.png" → URL du fichier dans app/md
  *   lien qui ne mène à rien → href vide, affiché comme du texte
- * Les images pointent vers leur fichier dans app/md.
  */
 const reecrireLiens = (tokens: Token[], chemin: string, route: string) => {
   const dossier = chemin.split('/').slice(0, -1).join('/')
   walkTokens(tokens, (t) => {
-    if (t.type === 'link') t.href = routeDuLien(dossier, t.href, route) ?? ''
-    else if (t.type === 'image' && t.href && !/^([a-z][a-z0-9+.-]*:|\/)/i.test(t.href))
-      t.href = mdUrl(resoudre(dossier, decodeURI(t.href)))
+    if (t.type === 'link' || t.type === 'image') t.href = routeDuLien(dossier, t.href, route) ?? ''
   })
 }
 
 /**
- * Lit une page : chemin relatif sans .md ("reseaux/01-couche-4/tcp").
- * `route` = route où la page est affichée (pour les liens #titre), par défaut /chemin.md.
+ * Lit une page : fichier dans app/md ("reseaux/01-couche-4/tcp.md").
+ * `route` = route où la page est affichée (pour les liens #titre), par défaut /chemin.
  */
-export const lirePage = async (chemin: string, route = `/${chemin}.md`): Promise<PageLue> => {
-  const rep = await fetch(mdUrl(`${chemin}.md`))
-  if (!rep.ok) throw new Error(`Page introuvable : ${chemin}.md`)
+export const lirePage = async (chemin: string, route = `/${chemin}`): Promise<PageLue> => {
+  const rep = await fetch(mdUrl(chemin))
+  if (!rep.ok) throw new Error(`Page introuvable : ${chemin}`)
   const tokens = lex(await rep.text()).filter((t, i) => !(i === 0 && t.type === 'space'))
   reecrireLiens(tokens, chemin, route)
   let titre: string | undefined

@@ -4,8 +4,8 @@
 // comme une page, mais seulement atteints par un lien (absents de la sidebar).
 // Sert à retrouver la page d'une URL et à transformer les liens écrits dans les .md
 // en URL du site (ou en simple texte quand le fichier n'existe pas).
-import { libelle, mdUrl, normaliser, resoudre } from './chemins'
-import type { Lecon, Page, Theme } from './RouterMarkdown'
+import { mdUrl, normaliser, pageDe, pagesDe, type Page } from './chemins'
+import type { Lecon, Theme } from './RouterMarkdown'
 
 export interface PageTrouvee {
   theme: Theme
@@ -29,85 +29,68 @@ const nomDe = (fichier: string) => normaliser(fichier.split('/').at(-1)!.replace
 
 /** Remplit la table à partir des thèmes construits et de la liste des fichiers */
 export const initialiser = (themes: Theme[], arbre: string[]): void => {
-  routes.clear()
-  parNom.clear()
-  sommaires.clear()
-  fichiers.clear()
+  for (const table of [routes, parNom, sommaires, fichiers]) table.clear()
   arbre.forEach((f) => fichiers.add(f))
   sommaires.set('intro.md', '/')
 
-  const ajouter = (trouvee: PageTrouvee, fichier = `${trouvee.page.chemin}.md`) => {
-    routes.set(fichier, trouvee)
-    const nom = nomDe(fichier)
+  const ajouter = (trouvee: PageTrouvee) => {
+    routes.set(trouvee.page.chemin, trouvee)
+    const nom = nomDe(trouvee.page.chemin)
     // "intro" existe dans chaque leçon : trop ambigu pour une recherche par nom
     if (nom !== 'intro' && !parNom.has(nom)) parNom.set(nom, trouvee)
   }
   for (const theme of themes) {
-    if (theme.intro) sommaires.set(`${theme.intro.chemin}.md`, theme.route)
+    if (theme.intro) sommaires.set(theme.intro.chemin, theme.route)
     theme.pages.forEach((page) => ajouter({ theme, page }))
-    for (const lecon of theme.lecons)
-      [lecon.intro, ...lecon.pages].forEach((page) => page && ajouter({ theme, lecon, page }))
+    for (const lecon of theme.lecons) pagesDe(lecon).forEach((page) => ajouter({ theme, lecon, page }))
   }
 
   // PDF : n'importe où dans un thème, quelle que soit la profondeur
   for (const fichier of arbre.filter((f) => /\.pdf$/i.test(f))) {
-    const parts = fichier.split('/')
-    const theme = themes.find((t) => t.slug === parts[0])
-    if (!theme || parts.length < 2) continue
-    const lecon = parts.length > 2 ? theme.lecons.find((l) => l.slug === parts[1]) : undefined
-    const page = {
-      chemin: fichier,
-      label: libelle(parts.at(-1)!.replace(/\.pdf$/i, '')),
-      route: `/${fichier}`,
-    }
-    ajouter({ theme, lecon, page, pdf: mdUrl(fichier) }, fichier)
+    const [slug, leconSlug, ...reste] = fichier.split('/')
+    const theme = themes.find((t) => t.slug === slug)
+    if (!theme || !leconSlug) continue
+    const lecon = reste.length ? theme.lecons.find((l) => l.slug === leconSlug) : undefined
+    ajouter({ theme, lecon, page: pageDe(fichier), pdf: mdUrl(fichier) })
   }
 }
 
 /** Page d'un fichier ("reseaux/01-couche-4/tcp.md"), ou undefined */
 export const trouver = (fichier: string): PageTrouvee | undefined => routes.get(fichier)
 
+/** Page d'un fichier : chemin exact, sinon par nom de fichier */
+const chercher = (fichier: string) => (routes.get(fichier) ?? parNom.get(nomDe(fichier)))?.page
+
 /** Route Vue → href utilisable dans le HTML rendu ("#/reseaux/x.md") */
 const versHref = (route: string) => `#${route.split('/').map(encodeURIComponent).join('/')}`
 
 /**
- * URL du site pour un lien écrit dans un .md, ou undefined s'il ne mène à rien
+ * URL du site pour un lien (ou une image) écrit dans un .md, ou undefined s'il ne mène à rien
  * (le lien sera alors affiché comme du texte).
  *   dossier : dossier du .md qui contient le lien ("reseaux/corba")
  *   route   : route où ce .md est affiché, pour les liens "#titre"
  */
 export const routeDuLien = (dossier: string, href: string, route: string): string | undefined => {
+  if (!href) return undefined
   // URL complète (http:, mailto:…) : laissée telle quelle
   if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return href
+  if (href.startsWith('#')) return `${versHref(route)}${href}`
 
-  const i = href.indexOf('#')
-  const brut = i < 0 ? href : href.slice(0, i)
-  const suffixe = i < 0 ? '' : href.slice(i)
-  if (!brut) return suffixe ? `${versHref(route)}${suffixe}` : undefined
-
-  let relatif = brut
+  // Résolu comme le ferait un navigateur : "../x.md", "/theme/x.md" (racine de app/md), "%20", "#ancre"
+  const url = new URL(href, `x:/${dossier && `${dossier}/`}`)
+  let cible: string
   try {
-    relatif = decodeURI(brut)
+    cible = decodeURIComponent(url.pathname.slice(1))
   } catch {
-    // %xx invalide : on garde le texte tel quel
+    return undefined // %xx invalide
   }
-  // "/theme/page.md" part de la racine de app/md, le reste du dossier du .md
-  const cible = relatif.startsWith('/') ? resoudre('', relatif) : resoudre(dossier, relatif)
+  const vers = (r?: string) => r && `${versHref(r)}${url.hash}`
 
-  // PDF : page du site qui l'affiche (chemin exact, sinon par nom de fichier)
-  if (/\.pdf$/i.test(cible)) {
-    const pdf = (routes.get(cible) ?? parNom.get(nomDe(cible)))?.page
-    return pdf ? `${versHref(pdf.route)}${suffixe}` : undefined
-  }
-
+  if (/\.pdf$/i.test(cible)) return vers(chercher(cible)?.route)
   // Autre fichier que du Markdown (image, zip…) : lien direct s'il existe
   if (/\.[a-z0-9]+$/i.test(cible) && !/\.md$/i.test(cible))
     return fichiers.has(cible) ? mdUrl(cible) : undefined
-
   // Lien sans extension (style Obsidian) : c'est un .md
   const md = /\.md$/i.test(cible) ? cible : `${cible}.md`
-  const sommaire = sommaires.get(md)
-  if (sommaire) return `${versHref(sommaire)}${suffixe}`
-  const page = (routes.get(md) ?? parNom.get(nomDe(md)))?.page
-  return page ? `${versHref(page.route)}${suffixe}` : undefined
+  return vers(sommaires.get(md) ?? chercher(md)?.route)
 }
