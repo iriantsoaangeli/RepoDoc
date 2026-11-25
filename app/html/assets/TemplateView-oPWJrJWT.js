@@ -1,4 +1,4 @@
-import{At as e,Ct as t,Et as n,Gt as r,Rt as i,Yt as a,jt as o,l as s,s as c}from"./MarkdownReader-D3XuGI2a.js";import{a as l,i as u,n as d,r as f,t as p}from"./MdBlocks-BjWfDgyL.js";var m={class:`ion-page`},h={class:`page-body`},g=`iriantsoaangeli/RepoDoc`,_=`## Principe
+import{At as e,Ct as t,Et as n,Gt as r,Rt as i,Yt as a,jt as o,l as s,s as c}from"./MarkdownReader-D0UB4B0O.js";import{a as l,i as u,n as d,r as f,t as p}from"./MdBlocks-Blj8XEkR.js";var m={class:`ion-page`},h={class:`page-body`},g=`iriantsoaangeli/RepoDoc`,_=`## Principe
 
 TCP est un protocole **orienté connexion** qui garantit l'ordre et la livraison des données.
 

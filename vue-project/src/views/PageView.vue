@@ -59,6 +59,12 @@ watch(
       layout.value?.positionner()
       return
     }
+    // PDF : affiché par le navigateur, rien à lire
+    if (trouve.value!.pdf) {
+      document.title = `${page.label} · ${trouve.value!.theme.label}`
+      layout.value?.positionner()
+      return
+    }
     try {
       lue.value = await lirePage(page.chemin)
       document.title = `${lue.value.titre ?? page.label} · ${trouve.value!.theme.label}`
@@ -75,7 +81,7 @@ watch(
   <div class="ion-page">
     <SiteHeader :brand="{ label: site.titre, to: '/' }" :themes="themesHeader(site, themeCourant?.slug)" />
 
-    <DocLayout ref="layout">
+    <DocLayout ref="layout" :lecteur="!!trouve?.pdf">
       <template #toc="{ actif }">
         <SideBar
           v-if="lue?.toc.length"
@@ -118,13 +124,29 @@ watch(
           › {{ trouve.page.label }}
         </div>
         <h1>{{ lue?.titre ?? trouve.page.label }}</h1>
-        <p v-if="erreur">{{ erreur }}</p>
+        <!-- PDF : lecteur intégré du navigateur, et lien direct pour les mobiles qui ne l'affichent pas -->
+        <template v-if="trouve.pdf">
+          <p>
+            <a :href="trouve.pdf" target="_blank" rel="noopener">Ouvrir le PDF dans un nouvel onglet</a>
+            ·
+            <a :href="trouve.pdf" download>Télécharger</a>
+          </p>
+          <!-- navpanes=0 : miniatures fermées ; view=FitH (Chrome) / zoom=page-width (Firefox) :
+               le PDF prend toute la largeur du lecteur -->
+          <iframe
+            class="lecteur-pdf"
+            :src="`${trouve.pdf}#navpanes=0&view=FitH&zoom=page-width`"
+            :title="trouve.page.label"
+          ></iframe>
+        </template>
+        <p v-else-if="erreur">{{ erreur }}</p>
         <article v-else-if="lue" class="page-body">
           <MdBlocks :tokens="lue.tokens" />
         </article>
         <p v-else>Chargement…</p>
 
-        <nav class="page-nav">
+        <!-- Un PDF n'est pas dans l'ordre de lecture du thème : pas de précédent / suivant -->
+        <nav v-if="!trouve.pdf" class="page-nav">
           <RouterLink v-if="voisins.prec" :to="voisins.prec.route"
             ><small>Précédent</small>{{ libelleVoisin(voisins.prec) }}</RouterLink
           >
@@ -140,7 +162,8 @@ watch(
       </template>
 
       <template #footer>
-        <SiteFooter v-if="site.repo" :repo="site.repo" />
+        <!-- Pas de footer sous un PDF : la page tient dans l'écran, seul le lecteur défile -->
+        <SiteFooter v-if="site.repo && !trouve?.pdf" :repo="site.repo" />
       </template>
     </DocLayout>
   </div>

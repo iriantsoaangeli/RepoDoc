@@ -136,6 +136,21 @@ pre:hover .copy-btn, .copy-btn:focus { opacity: 1; }
   margin: 1em 0; padding: 8px 16px; border-left: 4px solid var(--orange);
   background: var(--bg-soft); border-radius: 0 6px 6px 0;
 }
+/* ---------- Mode lecteur (PDF) ---------- */
+/* Pas de colonne table des matières sur ordinateur (le menu mobile reste) */
+.doc-body.lecteur ion-split-pane.split-pane-visible > ion-menu { display: none; }
+/* Feuille plus large qui remplit la hauteur de l'écran : seul le lecteur défile */
+.doc-body.lecteur .content {
+  display: flex; flex-direction: column; max-width: 1400px; width: calc(100% - 32px);
+  height: calc(100% - 32px); margin: 16px auto; padding: 20px 32px 24px;
+}
+.doc-body.lecteur .content h1 { margin-bottom: 8px; }
+.doc-body.lecteur .content p { margin: 0 0 12px; }
+.lecteur-pdf {
+  flex: 1; min-height: 0; width: 100%;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg-soft);
+}
+
 .page-nav {
   display: flex; justify-content: space-between; gap: 12px; margin-top: 64px;
   padding-top: 24px; border-top: 1px solid var(--border);

@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative, resolve, sep } from 'node:path'
+import { extname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, type Plugin } from 'vite'
@@ -7,6 +7,17 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 const MD = fileURLToPath(new URL('../app/md', import.meta.url))
+
+/** Types des fichiers non texte servis depuis app/md */
+const TYPES: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+}
 
 /** Tous les fichiers d'un dossier, en chemins relatifs avec des / */
 const lister = (dossier: string): string[] =>
@@ -35,7 +46,8 @@ const mdLocal = (): Plugin => ({
         res.statusCode = 404
         return res.end()
       }
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+      // Comme GitHub Pages : le bon type selon l'extension (sinon un PDF s'afficherait en texte)
+      res.setHeader('Content-Type', TYPES[extname(fichier).toLowerCase()] ?? 'text/plain; charset=utf-8')
       res.end(readFileSync(fichier))
     })
   },

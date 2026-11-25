@@ -9,6 +9,14 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { normaliser } from '@/lecteur/chemins'
 
+defineProps<{
+  /**
+   * Mode lecteur (PDF) : pas de colonne table des matières sur ordinateur,
+   * et la page remplit la hauteur de l'écran (seul le lecteur défile).
+   */
+  lecteur?: boolean
+}>()
+
 const main = ref<InstanceType<typeof IonContent>>()
 const actif = ref('')
 const route = useRoute()
@@ -106,7 +114,7 @@ defineExpose({ positionner })
 </script>
 
 <template>
-  <div class="doc-body">
+  <div class="doc-body" :class="{ lecteur }">
     <IonSplitPane content-id="main" when="lg">
       <IonMenu content-id="main">
         <IonContent @click="onSideClick">

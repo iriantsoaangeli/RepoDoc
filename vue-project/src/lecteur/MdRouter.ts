@@ -1,8 +1,10 @@
 // Table des routes du site, construite une fois au démarrage à partir des fichiers de app/md.
 // Route d'une page = chemin de son fichier : "/reseaux/01-couche-4/tcp.md".
+// Les PDF ont aussi leur route ("/cours/gestion-rh/modeles/cdd.pdf") : affichés dans le site
+// comme une page, mais seulement atteints par un lien (absents de la sidebar).
 // Sert à retrouver la page d'une URL et à transformer les liens écrits dans les .md
 // en URL du site (ou en simple texte quand le fichier n'existe pas).
-import { mdUrl, normaliser, resoudre } from './chemins'
+import { libelle, mdUrl, normaliser, resoudre } from './chemins'
 import type { Lecon, Page, Theme } from './RouterMarkdown'
 
 export interface PageTrouvee {
@@ -10,11 +12,13 @@ export interface PageTrouvee {
   /** Absente pour une page posée directement dans le thème */
   lecon?: Lecon
   page: Page
+  /** URL du fichier quand la page est un PDF */
+  pdf?: string
 }
 
-/** "reseaux/01-couche-4/tcp.md" → page */
+/** "reseaux/01-couche-4/tcp.md", "cours/gestion-rh/modeles/cdd.pdf" → page */
 const routes = new Map<string, PageTrouvee>()
-/** Nom de fichier normalisé ("tcp") → page, pour les liens écrits avec le seul nom */
+/** Nom de fichier normalisé ("tcp", "cdd.pdf") → page, pour les liens écrits avec le seul nom */
 const parNom = new Map<string, PageTrouvee>()
 /** intro.md de la racine et des thèmes → leur sommaire ("/", "/reseaux") */
 const sommaires = new Map<string, string>()
@@ -32,8 +36,7 @@ export const initialiser = (themes: Theme[], arbre: string[]): void => {
   arbre.forEach((f) => fichiers.add(f))
   sommaires.set('intro.md', '/')
 
-  const ajouter = (trouvee: PageTrouvee) => {
-    const fichier = `${trouvee.page.chemin}.md`
+  const ajouter = (trouvee: PageTrouvee, fichier = `${trouvee.page.chemin}.md`) => {
     routes.set(fichier, trouvee)
     const nom = nomDe(fichier)
     // "intro" existe dans chaque leçon : trop ambigu pour une recherche par nom
@@ -44,6 +47,20 @@ export const initialiser = (themes: Theme[], arbre: string[]): void => {
     theme.pages.forEach((page) => ajouter({ theme, page }))
     for (const lecon of theme.lecons)
       [lecon.intro, ...lecon.pages].forEach((page) => page && ajouter({ theme, lecon, page }))
+  }
+
+  // PDF : n'importe où dans un thème, quelle que soit la profondeur
+  for (const fichier of arbre.filter((f) => /\.pdf$/i.test(f))) {
+    const parts = fichier.split('/')
+    const theme = themes.find((t) => t.slug === parts[0])
+    if (!theme || parts.length < 2) continue
+    const lecon = parts.length > 2 ? theme.lecons.find((l) => l.slug === parts[1]) : undefined
+    const page = {
+      chemin: fichier,
+      label: libelle(parts.at(-1)!.replace(/\.pdf$/i, '')),
+      route: `/${fichier}`,
+    }
+    ajouter({ theme, lecon, page, pdf: mdUrl(fichier) }, fichier)
   }
 }
 
@@ -77,7 +94,13 @@ export const routeDuLien = (dossier: string, href: string, route: string): strin
   // "/theme/page.md" part de la racine de app/md, le reste du dossier du .md
   const cible = relatif.startsWith('/') ? resoudre('', relatif) : resoudre(dossier, relatif)
 
-  // Autre fichier que du Markdown (image, pdf…) : lien direct s'il existe
+  // PDF : page du site qui l'affiche (chemin exact, sinon par nom de fichier)
+  if (/\.pdf$/i.test(cible)) {
+    const pdf = (routes.get(cible) ?? parNom.get(nomDe(cible)))?.page
+    return pdf ? `${versHref(pdf.route)}${suffixe}` : undefined
+  }
+
+  // Autre fichier que du Markdown (image, zip…) : lien direct s'il existe
   if (/\.[a-z0-9]+$/i.test(cible) && !/\.md$/i.test(cible))
     return fichiers.has(cible) ? mdUrl(cible) : undefined
 

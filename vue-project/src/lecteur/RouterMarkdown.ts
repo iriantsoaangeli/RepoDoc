@@ -124,7 +124,11 @@ export const chargerSite = async (): Promise<void> => {
     dossiers.forEach((d, i) => configs.set(d, lues[i]!))
 
     const { intro, themes } = construire(arbre, configs)
-    initialiser(themes, arbre)
+    // Fichiers cachés par les config.yaml exclus aussi des liens (PDF compris)
+    initialiser(
+      themes,
+      arbre.filter((f) => !estCache(f, configs)),
+    )
     etat.site = { titre: globale.titre ?? 'Documentation', repo, intro, themes }
   } catch (e) {
     etat.erreur = e instanceof Error ? e.message : String(e)
