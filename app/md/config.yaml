@@ -2,7 +2,7 @@
 # Nom affiché dans le header
 titre: Mes notes
 # Dépôt GitHub "compte/repo" : vide = déduit de l'URL github.io
-repo: https://github.com/iriantsoaangeli/RepoDoc
+repo: iriantsoaangeli/RepoDoc
 # Chemin de ce dossier dans le dépôt (pour l'API GitHub)
 dossier: app/md
 # Thèmes ou pages à ne pas afficher (tout est affiché par défaut)
