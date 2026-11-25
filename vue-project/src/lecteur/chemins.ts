@@ -27,5 +27,9 @@ export const libelle = (nom: string): string => {
   return propre ? propre[0]!.toUpperCase() + propre.slice(1) : nom
 }
 
+/** Pour comparer des noms sans tenir compte des majuscules ni des accents : "Récupérer" → "recuperer" */
+export const normaliser = (texte: string): string =>
+  texte.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim()
+
 /** Tri naturel : "2-b" avant "10-a" */
 export const comparer = new Intl.Collator('fr', { numeric: true }).compare

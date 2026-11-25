@@ -4,9 +4,14 @@ import { Lexer, Parser, Renderer, walkTokens, type Token, type Tokens } from 'ma
 export type { Token, Tokens }
 export { walkTokens }
 
-/** Rendu HTML : les liens externes (http, https) s'ouvrent dans un nouvel onglet */
+/**
+ * Rendu HTML des liens :
+ *   - href vide (lien qui ne mène à aucun fichier, voir MdRouter) → texte simple
+ *   - liens externes (http, https) → nouvel onglet
+ */
 class RenduLiens extends Renderer {
   override link(token: Tokens.Link): string {
+    if (!token.href) return this.parser.parseInline(token.tokens)
     const html = super.link(token)
     return /^https?:\/\//.test(token.href)
       ? html.replace('<a ', '<a target="_blank" rel="noopener" ')
@@ -25,15 +30,17 @@ export const inline = (tokens: Token[] | undefined, fallback = ''): string =>
 /** Transforme des blocs entiers en HTML (blocs sans composant dédié) */
 export const blocs = (tokens: Token[]): string => Parser.parse(tokens, options)
 
-/** "Poignée de main !" → "poignee-de-main" */
+/**
+ * Id d'un titre, au même format que GitHub et Obsidian (pour que les liens "#…" écrits
+ * à la main marchent) : "2. Récupérer l'image" → "2-récupérer-limage"
+ */
 export const slug = (text: string): string =>
   text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
     .replace(/<[^>]*>/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, '')
+    .replace(/\s/g, '-')
 
 export interface Heading {
   id: string

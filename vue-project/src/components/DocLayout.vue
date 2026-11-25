@@ -7,6 +7,7 @@
 import { IonContent, IonMenu, IonSplitPane, menuController } from '@ionic/vue'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { normaliser } from '@/lecteur/chemins'
 
 const main = ref<InstanceType<typeof IonContent>>()
 const actif = ref('')
@@ -57,9 +58,21 @@ onMounted(() => {
 })
 onBeforeUnmount(() => removeEventListener('popstate', onPopstate))
 
-/** Fait défiler jusqu'au titre d'id donné. Faux s'il n'existe pas. */
+/** Ancre réduite à ses lettres et chiffres sans accents : "2-Récupérer-l-image" → "2recupererlimage" */
+const reduire = (ancre: string) => normaliser(ancre).replace(/[^a-z0-9]/g, '')
+
+/**
+ * Fait défiler jusqu'au titre d'id donné. Faux s'il n'existe pas.
+ * Sans id exact, on accepte un titre dont l'id ne diffère que par les accents
+ * ou la ponctuation (anciens liens partagés, ancres écrites à la main).
+ */
 const allerA = (id: string, doux = false): boolean => {
-  const cible = document.getElementById(decodeURIComponent(id))
+  const voulu = decodeURIComponent(id)
+  const cible =
+    document.getElementById(voulu) ??
+    [...document.querySelectorAll<HTMLElement>('.page-body [id]')].find(
+      (h) => reduire(h.id) === reduire(voulu),
+    )
   cible?.scrollIntoView({ behavior: doux ? 'smooth' : 'auto' })
   return !!cible
 }
