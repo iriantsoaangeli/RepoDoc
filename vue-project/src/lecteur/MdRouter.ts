@@ -9,8 +9,9 @@ import type { Lecon, Theme } from './RouterMarkdown'
 
 export interface PageTrouvee {
   theme: Theme
-  /** Absente pour une page posée directement dans le thème */
-  lecon?: Lecon
+  /** Leçons qui contiennent la page, de la plus haute à la plus profonde (vide si la page est
+   *  posée directement dans le thème) */
+  lecons: Lecon[]
   page: Page
   /** URL du fichier quand la page est un PDF */
   pdf?: string
@@ -39,19 +40,31 @@ export const initialiser = (themes: Theme[], arbre: string[]): void => {
     // "intro" existe dans chaque leçon : trop ambigu pour une recherche par nom
     if (nom !== 'intro' && !parNom.has(nom)) parNom.set(nom, trouvee)
   }
+  // Pages d'une leçon puis de ses sous-leçons ; parents = leçons au-dessus d'elle
+  const parcourir = (theme: Theme, parents: Lecon[], lecon: Lecon) => {
+    const lecons = [...parents, lecon]
+    pagesDe(lecon).forEach((page) => ajouter({ theme, lecons, page }))
+    lecon.lecons.forEach((l) => parcourir(theme, lecons, l))
+  }
   for (const theme of themes) {
     if (theme.intro) sommaires.set(theme.intro.chemin, theme.route)
-    theme.pages.forEach((page) => ajouter({ theme, page }))
-    for (const lecon of theme.lecons) pagesDe(lecon).forEach((page) => ajouter({ theme, lecon, page }))
+    theme.pages.forEach((page) => ajouter({ theme, lecons: [], page }))
+    theme.lecons.forEach((l) => parcourir(theme, [], l))
   }
 
-  // PDF : n'importe où dans un thème, quelle que soit la profondeur
+  // PDF : n'importe où dans un thème, rattaché à la leçon la plus profonde qui le contient
   for (const fichier of arbre.filter((f) => /\.pdf$/i.test(f))) {
-    const [slug, leconSlug, ...reste] = fichier.split('/')
+    const [slug, ...reste] = fichier.split('/')
     const theme = themes.find((t) => t.slug === slug)
-    if (!theme || !leconSlug) continue
-    const lecon = reste.length ? theme.lecons.find((l) => l.slug === leconSlug) : undefined
-    ajouter({ theme, lecon, page: pageDe(fichier), pdf: mdUrl(fichier) })
+    if (!theme || !reste.length) continue
+    const lecons: Lecon[] = []
+    let parent: { lecons: Lecon[] } = theme
+    for (const dossier of reste.slice(0, -1)) {
+      const lecon = parent.lecons.find((l) => l.slug === dossier)
+      if (!lecon) break // dossier sans .md : pas une leçon
+      lecons.push((parent = lecon))
+    }
+    ajouter({ theme, lecons, page: pageDe(fichier), pdf: mdUrl(fichier) })
   }
 }
 

@@ -33,9 +33,22 @@ export const pageDe = (chemin: string): Page => ({
   route: `/${chemin}`,
 })
 
-/** Pages d'une leçon dans l'ordre de lecture : son intro, puis les autres */
+/** Pages posées dans un dossier (leçon), dans l'ordre de lecture : son intro, puis les autres */
 export const pagesDe = (lecon: { intro?: Page; pages: Page[] }): Page[] =>
   lecon.intro ? [lecon.intro, ...lecon.pages] : lecon.pages
+
+/** Un dossier et ses sous-dossiers, quelle que soit la profondeur */
+interface Dossier {
+  intro?: Page
+  pages: Page[]
+  lecons: Dossier[]
+}
+
+/** Toutes les pages d'une leçon et de ses sous-leçons, dans l'ordre de lecture */
+export const toutesPages = (lecon: Dossier): Page[] => [
+  ...pagesDe(lecon),
+  ...lecon.lecons.flatMap(toutesPages),
+]
 
 /** Pour comparer des noms sans tenir compte des majuscules ni des accents : "Récupérer" → "recuperer" */
 export const normaliser = (texte: string): string =>

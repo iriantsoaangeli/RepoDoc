@@ -1,16 +1,16 @@
 <script setup lang="ts">
 // Sidebar droite : pages directes du thème, puis ses leçons en accordéon pliable.
-// La leçon de la page courante est ouverte par défaut.
-import { IonAccordion, IonAccordionGroup, IonItem, IonLabel } from '@ionic/vue'
+// Les leçons qui contiennent la page courante sont ouvertes par défaut.
 import { RouterLink } from 'vue-router'
-import { pagesDe, type Theme } from '@/lecteur/RouterMarkdown'
+import ArbreLecons from './ArbreLecons.vue'
+import type { Theme } from '@/lecteur/RouterMarkdown'
 
 defineProps<{
   theme: Theme
   /** Route de la page affichée */
   actif?: string
-  /** Slug de la leçon à ouvrir */
-  leconActive?: string
+  /** Chemins des leçons à ouvrir */
+  ouvertes?: string[]
 }>()
 </script>
 
@@ -22,19 +22,5 @@ defineProps<{
     </li>
   </ul>
 
-  <IonAccordionGroup :multiple="true" :value="leconActive ? [leconActive] : []">
-    <IonAccordion v-for="lecon in theme.lecons" :key="lecon.slug" :value="lecon.slug">
-      <!-- slot = attribut de web component Ionic, pas un slot Vue -->
-      <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-      <IonItem slot="header" lines="none">
-        <IonLabel>{{ lecon.label }}</IonLabel>
-      </IonItem>
-      <!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-      <ul slot="content" class="side-list">
-        <li v-for="page in pagesDe(lecon)" :key="page.route">
-          <RouterLink :to="page.route" :class="{ active: page.route === actif }">{{ page.label }}</RouterLink>
-        </li>
-      </ul>
-    </IonAccordion>
-  </IonAccordionGroup>
+  <ArbreLecons :lecons="theme.lecons" :actif="actif" :ouvertes="ouvertes" />
 </template>

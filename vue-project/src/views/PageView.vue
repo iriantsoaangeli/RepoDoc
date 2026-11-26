@@ -21,7 +21,9 @@ const route = useRoute()
 const layout = ref<InstanceType<typeof DocLayout>>()
 
 const trouve = computed(() => trouver(props.chemin))
-const lecon = computed(() => trouve.value?.lecon)
+// Leçons qui contiennent la page (de la plus haute à la plus profonde) et la plus profonde
+const lecons = computed(() => trouve.value?.lecons ?? [])
+const lecon = computed(() => lecons.value.at(-1))
 // Thème de la page, ou celui du début de l'URL quand la page est introuvable
 const themeCourant = computed(
   () => trouve.value?.theme ?? site.value.themes.find((t) => t.slug === props.chemin.split('/')[0]),
@@ -36,7 +38,7 @@ const voisins = computed(() => {
 })
 // "Couche 7 · Dns" quand la page voisine est dans une autre leçon
 const libelleVoisin = (page: Page) => {
-  const sa = trouver(page.chemin)?.lecon
+  const sa = trouver(page.chemin)?.lecons.at(-1)
   return sa && sa !== lecon.value ? `${sa.label} · ${page.label}` : page.label
 }
 
@@ -85,7 +87,7 @@ watch(
       </template>
 
       <template v-if="themeCourant" #pages>
-        <LeconsBar :theme="themeCourant" :actif="trouve?.page.route" :lecon-active="lecon?.slug" />
+        <LeconsBar :theme="themeCourant" :actif="trouve?.page.route" :ouvertes="lecons.map((l) => l.chemin)" />
       </template>
 
       <template v-if="!trouve">
@@ -100,13 +102,11 @@ watch(
       <template v-else>
         <div class="breadcrumb">
           <RouterLink :to="trouve.theme.route">{{ trouve.theme.label }}</RouterLink>
-          <template v-if="lecon">
+          <template v-for="l in lecons" :key="l.chemin">
             ›
             <!-- Leçon sans intro : son entrée est la page affichée, pas de lien vers soi-même -->
-            <template v-if="entreeLecon(lecon) === trouve.page">{{ lecon.label }}</template>
-            <RouterLink v-else :to="entreeLecon(lecon)!.route">{{
-              lecon.label
-            }}</RouterLink>
+            <template v-if="entreeLecon(l) === trouve.page">{{ l.label }}</template>
+            <RouterLink v-else :to="entreeLecon(l)!.route">{{ l.label }}</RouterLink>
           </template>
           › {{ trouve.page.label }}
         </div>

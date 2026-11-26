@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// Sommaire : thème → leçon → page, en listes imbriquées.
+// Sommaire : thème → leçons (imbriquées) → pages, en listes imbriquées.
 // Le titre d'une leçon mène à sa première page (son intro.md s'il existe).
 import { RouterLink } from 'vue-router'
-import { entreeLecon, type Theme } from '@/lecteur/RouterMarkdown'
+import SommaireLecons from './SommaireLecons.vue'
+import type { Theme } from '@/lecteur/RouterMarkdown'
 
 defineProps<{
   themes: Theme[]
@@ -20,14 +21,7 @@ defineProps<{
       <li v-for="page in theme.pages" :key="page.route">
         <RouterLink :to="page.route">{{ page.label }}</RouterLink>
       </li>
-      <li v-for="lecon in theme.lecons" :key="lecon.slug">
-        <RouterLink v-if="entreeLecon(lecon)" :to="entreeLecon(lecon)!.route"><strong>{{ lecon.label }}</strong></RouterLink>
-        <ul>
-          <li v-for="page in lecon.pages" :key="page.route">
-            <RouterLink :to="page.route">{{ page.label }}</RouterLink>
-          </li>
-        </ul>
-      </li>
+      <SommaireLecons :lecons="theme.lecons" />
     </ul>
     <p v-if="!theme.pages.length && !theme.lecons.length">Aucune page pour l'instant.</p>
   </section>

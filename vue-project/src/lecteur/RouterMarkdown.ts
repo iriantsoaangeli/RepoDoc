@@ -1,22 +1,28 @@
-// Construit le site à partir de app/md : thèmes (dossiers) → leçons (sous-dossiers) → pages (.md).
+// Construit le site à partir de app/md : thèmes (dossiers) → leçons (sous-dossiers, imbriqués
+// à n'importe quelle profondeur) → pages (.md).
 // Fournit l'état partagé (useSite) et les liens pour le header et les sidebars.
 import { reactive } from 'vue'
 import type { NavLink } from '@/types'
-import { comparer, joindre, libelle, pageDe, pagesDe, type Page } from './chemins'
+import { comparer, joindre, libelle, pageDe, pagesDe, toutesPages, type Page } from './chemins'
 import { lireConfig, resoudreRepo, type Config } from './LecteurConfig'
 import { synchroniser } from './HorsLigne'
 import { lireArbre } from './MarkdownReader'
 import { initialiser } from './MdRouter'
 
 export type { Page }
-export { pagesDe }
+export { pagesDe, toutesPages }
 
 export interface Lecon {
   slug: string
+  /** Dossier dans app/md : "api/firebase/firebase-auth" (unique, sert de clé) */
+  chemin: string
   label: string
   /** intro.md de la leçon : sa première page */
   intro?: Page
+  /** Pages posées directement dans la leçon */
   pages: Page[]
+  /** Sous-dossiers de la leçon */
+  lecons: Lecon[]
 }
 
 export interface Theme {
@@ -55,7 +61,14 @@ const estCache = (chemin: string, configs: Map<string, Config>): boolean =>
     }),
   )
 
-/** Range les fichiers .md dans thèmes / leçons / pages */
+/** Sous-leçon `slug` d'un thème ou d'une leçon, créée si elle n'existe pas encore */
+const sousLecon = (parent: { lecons: Lecon[] }, slug: string, chemin: string): Lecon => {
+  let lecon = parent.lecons.find((l) => l.slug === slug)
+  if (!lecon) parent.lecons.push((lecon = { slug, chemin, label: libelle(slug), pages: [], lecons: [] }))
+  return lecon
+}
+
+/** Range les fichiers .md dans thèmes / leçons (imbriquées) / pages */
 const construire = (arbre: string[]) => {
   const themes = new Map<string, Theme>()
   let intro: Page | undefined
@@ -69,21 +82,26 @@ const construire = (arbre: string[]) => {
       if (estIntro) intro = page
       continue
     }
-    if (parts.length > 3) continue // plus profond que thème/leçon/page : ignoré
 
-    const [slug, leconSlug] = parts as [string, string]
+    const [slug, ...dossiers] = parts.slice(0, -1) as [string, ...string[]]
     let theme = themes.get(slug)
     if (!theme)
       themes.set(slug, (theme = { slug, label: libelle(slug), route: `/${slug}`, pages: [], lecons: [] }))
 
-    if (parts.length === 2) {
+    if (!dossiers.length) {
       if (estIntro) theme.intro = page
       else theme.pages.push(page)
       continue
     }
 
-    let lecon = theme.lecons.find((l) => l.slug === leconSlug)
-    if (!lecon) theme.lecons.push((lecon = { slug: leconSlug, label: libelle(leconSlug), pages: [] }))
+    // Descend dossier par dossier : theme → leçon → sous-leçon…
+    let lecon!: Lecon
+    let parent: { lecons: Lecon[] } = theme
+    let chemin = slug
+    for (const dossier of dossiers) {
+      chemin = joindre(chemin, dossier)
+      parent = lecon = sousLecon(parent, dossier, chemin)
+    }
     if (estIntro) lecon.intro = { ...page, label: 'Introduction' }
     else lecon.pages.push(page)
   }
@@ -130,8 +148,8 @@ export const themesHeader = (site: Site, actif?: string): NavLink[] => [
 /** Toutes les pages d'un thème dans l'ordre de lecture (pour précédent / suivant) */
 export const pagesOrdonnees = (theme: Theme): Page[] => [
   ...theme.pages,
-  ...theme.lecons.flatMap(pagesDe),
+  ...theme.lecons.flatMap(toutesPages),
 ]
 
-/** Première page d'une leçon (son intro si elle existe) */
-export const entreeLecon = (lecon: Lecon): Page | undefined => pagesDe(lecon)[0]
+/** Première page d'une leçon (son intro si elle existe, sinon celle d'une sous-leçon) */
+export const entreeLecon = (lecon: Lecon): Page | undefined => toutesPages(lecon)[0]
