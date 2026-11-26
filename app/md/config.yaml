@@ -1,6 +1,6 @@
 # Config globale du site
 # Nom affiché dans le header
-titre: Mes notes
+titre: DOC
 # Dépôt GitHub "compte/repo" : vide = déduit de l'URL github.io
 repo: 
 # Chemin de ce dossier dans le dépôt (pour l'API GitHub)
