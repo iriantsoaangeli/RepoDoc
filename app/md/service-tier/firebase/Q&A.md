@@ -1,96 +1,68 @@
-# Q&A — Questions fréquentes
+# Q&A — Questions fréquentes (version Spark, sans carte)
 
 ## Sommaire
 
-1. [Faut-il écrire l'API à la main ?](#1-faut-il-écrire-lapi-à-la-main-)
-2. [Option A : Firebase génère une API à partir de mes tables ?](#2-option-a--firebase-génère-une-api-à-partir-de-mes-tables-)
-3. [Option B : c'est quoi la différence avec A ?](#3-option-b--cest-quoi-la-différence-avec-a-)
-4. [Option C : c'est un générateur ?](#4-option-c--cest-un-générateur-)
-5. [Option D : c'est « la version Python » ?](#5-option-d--cest-la-version-python-)
-6. [Laquelle je choisis ?](#6-laquelle-je-choisis-)
-7. [Firestore, c'est quoi exactement ?](#7-firestore-cest-quoi-exactement-)
-8. [NoSQL, ça veut dire quoi ?](#8-nosql-ça-veut-dire-quoi-)
-9. [Comment je « crée la base de données » ?](#9-comment-je-crée-la-base-de-données-)
-10. [Sans serveur, où se fait la validation des données ?](#10-sans-serveur-où-se-fait-la-validation-des-données-)
-11. [C'est quoi un index composite ?](#11-cest-quoi-un-index-composite-)
-12. [Pourquoi une carte bancaire si c'est gratuit ?](#12-pourquoi-une-carte-bancaire-si-cest-gratuit-)
-13. [Je peux quand même recevoir une facture ?](#13-je-peux-quand-même-recevoir-une-facture-)
-14. [La clé `apiKey` dans le code de l'app, c'est grave ?](#14-la-clé-apikey-dans-le-code-de-lapp-cest-grave-)
-15. [Pourquoi Storage aux États-Unis et Firestore en Belgique ?](#15-pourquoi-storage-aux-états-unis-et-firestore-en-belgique-)
-16. [Quel doc lire selon l'option ?](#16-quel-doc-lire-selon-loption-)
+1. [Pourquoi jamais Blaze ? Qu'est-ce qu'on perd ?](#1-pourquoi-jamais-blaze--quest-ce-quon-perd-)
+2. [Je peux recevoir une facture ?](#2-je-peux-recevoir-une-facture-)
+3. [Que se passe-t-il quand un quota est dépassé ?](#3-que-se-passe-t-il-quand-un-quota-est-dépassé-)
+4. [Faut-il écrire une API ?](#4-faut-il-écrire-une-api-)
+5. [Firestore, c'est quoi exactement ?](#5-firestore-cest-quoi-exactement-)
+6. [NoSQL, ça veut dire quoi ?](#6-nosql-ça-veut-dire-quoi-)
+7. [Comment je « crée la base de données » ?](#7-comment-je-crée-la-base-de-données-)
+8. [Sans serveur, où se fait la validation ?](#8-sans-serveur-où-se-fait-la-validation-)
+9. [Pourquoi les photos en base64 ? Quelles limites ?](#9-pourquoi-les-photos-en-base64--quelles-limites-)
+10. [Pourquoi la photo n'est pas directement dans l'annonce ?](#10-pourquoi-la-photo-nest-pas-directement-dans-lannonce-)
+11. [Et les PDF / documents ?](#11-et-les-pdf--documents-)
+12. [Sans serveur, comment compter et tenir les copies à jour ?](#12-sans-serveur-comment-compter-et-tenir-les-copies-à-jour-)
+13. [C'est quoi un index composite ? Et `fieldOverrides` ?](#13-cest-quoi-un-index-composite--et-fieldoverrides-)
+14. [La clé `apiKey` dans l'APK, c'est grave ?](#14-la-clé-apikey-dans-lapk-cest-grave-)
+15. [Et si plus tard je veux des notifs push ou des tâches planifiées ?](#15-et-si-plus-tard-je-veux-des-notifs-push-ou-des-tâches-planifiées-)
 
 ---
 
-## 1. Faut-il écrire l'API à la main ?
+## 1. Pourquoi jamais Blaze ? Qu'est-ce qu'on perd ?
 
-Non. Il y a 4 façons de faire :
+Spark = aucune carte, aucune facture possible. En échange, ces services sont indisponibles :
 
-| Option | Ce que tu écris | Coût | Doc |
-|---|---|---|---|
-| **A** | Code app (SDK) + règles de sécurité | Gratuit | `04c-option-a.md` |
-| **B** | A + 2-3 petites fonctions serveur | Gratuit | `04d-option-b.md` |
-| **C** | Un schéma + des requêtes, le code de l'app est généré (SQL Connect) | Payant après 3 mois (~9 $/mois) | non couvert |
-| **D** | Toute l'API à la main + `fetch` dans l'app | Gratuit dans les quotas | `04a` (TS) / `04b` (Python) |
+| Perdu | Remplacé par |
+|---|---|
+| Cloud Functions (code serveur) | SDK + règles de sécurité |
+| Cloud Storage (fichiers) | Photos en base64 dans Firestore |
+| Tâches planifiées | Rien (nettoyage fait par l'app au moment des suppressions) |
+| Notifs push automatiques | Rien |
 
-## 2. Option A : Firebase génère une API à partir de mes tables ?
+## 2. Je peux recevoir une facture ?
 
-Non, rien n'est généré, et il n'y a pas de tables.
+Non, tant qu'aucun compte de facturation n'est lié au projet. Le seul moyen d'en avoir une : cliquer sur **Upgrade / Modify plan / Blaze** et ajouter une carte. Ne le fais pas.
 
-- Google fait déjà tourner un service Firestore qui sait **lire, créer, modifier, supprimer, filtrer et trier** dans n'importe quelle collection. Tu ne vois pas son code, tu ne le modifies pas.
-- Le **SDK** (`firebase/firestore`) remplace ton `fetch` : `addDoc(...)` envoie la requête à ce service.
-- Les **règles** (`firestore.rules`) remplacent ton code de contrôle : c'est le seul endroit où tu décides qui a le droit de faire quoi.
+## 3. Que se passe-t-il quand un quota est dépassé ?
+
+Les opérations concernées échouent (code `resource-exhausted`) jusqu'à la remise à zéro, **vers minuit heure du Pacifique = vers 10h-11h à Madagascar**. Le stockage (1 Gio) et le téléchargement (10 Gio/mois) ne se remettent pas à zéro chaque jour : le stockage dépend de ce que tu gardes, le téléchargement repart chaque mois. Gestion de l'erreur dans l'app : doc 07.
+
+## 4. Faut-il écrire une API ?
+
+Non, et en Spark tu ne peux pas (pas de Cloud Functions).
+
+- Google fait tourner Firestore, qui sait déjà **lire, créer, modifier, supprimer, filtrer, trier** dans n'importe quelle collection. C'est une boîte noire : tu ne vois ni ne modifies son code.
+- Le **SDK** (`firebase/firestore`) remplace ton `fetch` : `addDoc(...)` envoie la requête.
+- Les **règles** (`firestore.rules`) remplacent ton code de contrôle.
 
 ```
-Option A :   App ──SDK──► Firestore (Google) ← firestore.rules
-Option D :   App ──fetch──► TON API ──► Firestore
+App ──SDK──► Firestore (Google) ◄── firestore.rules
 ```
 
-## 3. Option B : c'est quoi la différence avec A ?
-
-**B = A + les notifs push + la tâche de nuit.**
-
-- Les données : exactement comme A (SDK + règles).
-- En plus : 2 ou 3 fonctions serveur pour ce que l'app ne peut pas faire seule :
-  - envoyer une notif à **quelqu'un d'autre** (l'app n'a pas accès aux tokens des autres) ;
-  - exécuter une tâche quand personne n'a l'app ouverte (la nuit) ;
-  - utiliser une clé secrète (paiement, IA…).
-
-## 4. Option C : c'est un générateur ?
-
-Oui. Tu écris tes tables et tes requêtes dans des fichiers, l'outil génère des fonctions pour l'app (`listAnnonces()`, etc.). La base derrière est un vrai Postgres (SQL). Écarté ici car **payant après l'essai de 3 mois**.
-
-## 5. Option D : c'est « la version Python » ?
-
-Non. D = **l'API complète écrite à la main** (docs 04a et 04b). Le langage est un choix séparé, qui ne concerne que le code serveur :
-
-| Option | Code serveur | Choix TS / Python |
-|---|---|---|
-| A | Aucun | Non concerné |
-| B | 2-3 fonctions | Oui |
-| C | Aucun (généré) | Non concerné |
-| D | Toute l'API | Oui |
-
-## 6. Laquelle je choisis ?
-
-Pour ton app (photos, notifs push, tâche planifiée, gratuit) : **B**.
-
-- A ne fait ni notifs automatiques ni tâches planifiées.
-- C est payant.
-- D marche, mais tu écris et maintiens beaucoup plus de code, et chaque requête consomme un appel de fonction.
-
-## 7. Firestore, c'est quoi exactement ?
+## 5. Firestore, c'est quoi exactement ?
 
 Une **base de données hébergée par Google** :
+- rien à installer ni à maintenir ;
+- **NoSQL orientée documents** (des objets JSON, question 6) ;
+- accessible directement depuis l'app, protégée par les règles ;
+- temps réel possible (`onSnapshot`) ;
+- comptée **à l'opération** : 1 document lu = 1 lecture, quelle que soit sa taille.
 
-- **Pas de serveur à gérer** : rien à installer, elle grandit toute seule.
-- **NoSQL orientée documents** : tu stockes des objets JSON (question 8).
-- **Accessible directement depuis l'app** via le SDK, protégée par les règles.
-- **Temps réel en option** : `onSnapshot` prévient l'app dès qu'une donnée change.
-- **Facturée à l'opération** : chaque document lu / écrit / supprimé compte, quelle que soit sa taille. Gratuit : 50 000 lectures, 20 000 écritures, 20 000 suppressions par jour, 1 Gio stocké.
+## 6. NoSQL, ça veut dire quoi ?
 
-## 8. NoSQL, ça veut dire quoi ?
-
-Les mêmes données dans les deux mondes : des utilisateurs qui publient des annonces.
+Mêmes données dans les deux mondes :
 
 **SQL** — tables à colonnes fixes, reliées par des id :
 
@@ -98,93 +70,81 @@ Les mêmes données dans les deux mondes : des utilisateurs qui publient des ann
 users                      annonces
 id | nom                   id | titre | prix | user_id
 1  | Rado                  10 | Vélo  | 50   | 1
-2  | Hery                  11 | Table | 30   | 1
 ```
 
-Pour afficher « Vélo, 50, par Rado » : `JOIN` entre les deux tables.
+Afficher « Vélo, 50, par Rado » → `JOIN`.
 
 **Firestore** — collections de documents JSON :
 
 ```
-users/1        → { nom: "Rado" }
-annonces/10    → { titre: "Vélo",  prix: 50, userId: "1", userNom: "Rado" }
-annonces/11    → { titre: "Table", prix: 30, userId: "1", userNom: "Rado", photos: ["url1", "url2"] }
+users/1        → { name: "Rado" }
+items/10       → { title: "Vélo", price: 50, owner: "1", ownerName: "Rado" }
 ```
 
 | | SQL | Firestore |
 |---|---|---|
-| Structure | Fixe, déclarée avant | Libre : chaque document peut avoir ses propres champs (`photos` n'est que sur l'annonce 11) |
-| Relations | `JOIN` | **Pas de JOIN** : on recopie l'info utile (`userNom`) ou on fait 2 lectures |
-| Recopier des données | À éviter | Normal : 1 lecture suffit pour afficher l'annonce |
-| Revers | — | Si Rado change de nom, il faut mettre à jour ses annonces |
-| Listes | Table séparée | Dans le document (`photos: [...]`) ou sous-collection (`annonces/10/commentaires/...`) |
-| Requêtes | Tout (`LIKE`, `GROUP BY`, JOIN multiples) | Égalité, comparaisons, tri, limite. Pas de recherche plein texte, pas de JOIN |
-| Façon de concevoir | « Quelles entités j'ai ? » | « **Chaque écran lit quoi ?** » |
+| Structure | Fixe, déclarée avant | Libre, par document |
+| Relations | `JOIN` | **Pas de JOIN** : on recopie (`ownerName`) ou on fait 2 lectures |
+| Recopier | À éviter | Normal : 1 lecture suffit pour afficher |
+| Revers | — | Mettre à jour les copies (`renameProfile`) |
+| Listes | Table séparée | Tableau dans le doc ou sous-collection |
+| Requêtes | Tout | Égalité, comparaisons, tri, limite ; pas de plein texte, pas de JOIN |
+| Conception | « Quelles entités ? » | « **Chaque écran lit quoi ?** » |
 
-La question à se poser en Firestore : **« l'écran X affiche quoi, et comment le lire avec le moins de documents possible ? »**
+Méthode complète : doc 03.
 
-Le SQL est préférable pour : beaucoup de relations croisées, des statistiques complexes, de la comptabilité. Pour une app mobile classique (profils, annonces, messages, photos), Firestore convient et reste gratuit.
+## 7. Comment je « crée la base de données » ?
 
-## 9. Comment je « crée la base de données » ?
+1. Une fois dans la console (doc 02, étape 2), région `europe-west1`, définitive.
+2. **Pas de tables à créer** : une collection apparaît au premier document écrit.
+3. La structure est définie par ton code (`db.ts`) et vérifiée par les règles (`validItem`, `hasOnly`).
 
-1. Une seule fois dans la console : doc 02, étape 3 (région `europe-west1`, **définitive**).
-2. Il n'y a **pas de tables à créer**. Une collection apparaît au premier document écrit dedans : le premier `createItem(...)` crée `items`.
-3. La « structure » est définie par ton code et par `validItem` dans `firestore.rules`. Comment la concevoir : `02b-modeliser-ses-donnees.md`.
+## 8. Sans serveur, où se fait la validation ?
 
-## 10. Sans serveur, où se fait la validation des données ?
+Dans `firestore.rules` (doc 05) : champs autorisés (`hasOnly`), types (`is string`, `is number`), tailles (`size() <= 200`). Une écriture invalide est refusée par Google avant d'arriver en base. Valider aussi dans l'app sert à afficher un message clair, mais **seules les règles protègent** : n'importe qui peut appeler Firestore sans passer par ton app.
 
-Dans `firestore.rules`. Exemple (doc 04c) :
+## 9. Pourquoi les photos en base64 ? Quelles limites ?
 
-```
-function validItem(d) {
-  return d.keys().hasOnly(['title', 'owner', 'createdAt', 'photoUrl'])
-      && d.title is string && d.title.size() <= 200;
-}
-```
+Cloud Storage n'existe pas en Spark. La photo devient du texte dans un champ Firestore.
 
-Une écriture qui ne respecte pas la règle est refusée par Google avant d'arriver en base. Valider aussi dans l'app reste utile pour afficher un message clair à l'utilisateur, mais **seules les règles protègent vraiment** : quelqu'un peut appeler Firestore sans passer par ton app.
-
-## 11. C'est quoi un index composite ?
-
-Firestore indexe chaque champ tout seul automatiquement. Une requête qui **filtre sur un champ et trie sur un autre** (`owner == moi` trié par `createdAt`) a besoin d'un index qui combine les deux. Tu le déclares dans `firestore.indexes.json` (doc 04c). Si tu l'oublies, l'erreur contient un lien qui le crée en un clic.
-
-## 12. Pourquoi une carte bancaire si c'est gratuit ?
-
-Cloud Functions et Cloud Storage n'existent que sur le plan Blaze. Blaze inclut les quotas gratuits, et tu ne paies que ce qui les dépasse. La carte sert à facturer un éventuel dépassement.
-
-## 13. Je peux quand même recevoir une facture ?
-
-Oui, si tu dépasses les quotas. Les garde-fous (doc 08) :
-
-| Garde-fou | Effet |
+| Limite | Valeur |
 |---|---|
-| Alerte budget | Mail. **N'arrête rien.** |
-| Spend cap Functions | Met Functions en pause au montant choisi (pas instantané, quelques minutes de retard). |
-| `maxInstances: 2` | Limite la vitesse de consommation en cas de spam. |
-| Nettoyage des images Docker | Évite les petits frais de stockage après chaque déploiement. |
-| Règles + `limit()` | Firestore et Storage n'ont **pas** de spend cap : ce sont les règles et ton code qui les protègent. |
+| Document | 1 Mio max |
+| Gonflement base64 | +33 % → photo ≤ ~510 Ko de JPEG |
+| Stockage total | 1 Gio → ~3 000 photos de 300 Ko |
+| Téléchargement | 10 Gio/mois |
 
-## 14. La clé `apiKey` dans le code de l'app, c'est grave ?
+Détails : doc 04.
 
-Non. Elle identifie ton projet, ce n'est pas un mot de passe. N'importe qui peut la lire dans l'APK. **La sécurité vient des règles**, d'où leur importance en option A/B. Les vraies clés secrètes (paiement, IA) vont uniquement côté serveur (fonctions de l'option B).
+## 10. Pourquoi la photo n'est pas directement dans l'annonce ?
 
-## 15. Pourquoi Storage aux États-Unis et Firestore en Belgique ?
+Une liste de 20 annonces avec chacune une photo de 500 Ko = ~10 Mo téléchargés à chaque ouverture de l'écran → les 10 Gio/mois partent en ~1 000 ouvertures. Donc :
+- **miniature** (~20 Ko) dans l'annonce → la liste reste légère ;
+- **grande photo** dans `photos/{id}` → lue seulement quand on ouvre le détail, et ensuite depuis le cache.
 
-- **Storage** : le quota gratuit des nouveaux buckets n'existe qu'en `us-central1`, `us-east1`, `us-west1`.
-- **Firestore + Functions** : `europe-west1`, la région la plus proche de Madagascar parmi les moins chères. Les fonctions doivent être dans la même région que Firestore (obligatoire pour les déclencheurs).
+## 11. Et les PDF / documents ?
 
-Conséquence : les photos sont un peu plus lentes à charger. Acceptable pour du perso/test.
+Pas dans cette version : un document de plusieurs Mo ne tient pas dans 1 Mio. Il faudrait le découper en morceaux sur plusieurs documents, ce qui consomme vite le 1 Gio. Choix fait : photos seulement.
 
-## 16. Quel doc lire selon l'option ?
+## 12. Sans serveur, comment compter et tenir les copies à jour ?
 
-| Étape | Option B (recommandée) | Option D (API complète) |
-|---|---|---|
-| Comprendre | 00, 01, Q&A | 00, 01, 03 |
-| Créer le projet | 02 | 02 |
-| Modéliser les données | **02b** | 02b |
-| Données | **04c** | 04a ou 04b |
-| Fonctions serveur | **04d** | (incluses dans 04a/04b) |
-| Fichiers | 05 (règles **Storage** seulement) | 05 |
-| Push | 06 partie A étapes 1-2 + 04d | 06 |
-| App | 04c + 04d | 07 |
-| Anti-facture | 08 | 08 |
+| Besoin | Solution Spark |
+|---|---|
+| Nombre d'annonces | `getCountFromServer` : Firestore compte, 1 lecture par tranche de 1 000 documents |
+| `ownerName` à jour après renommage | `renameProfile()` met à jour le profil et les annonces ; les règles vérifient que la copie = nouveau nom |
+| Commentaires d'une annonce supprimée | `deleteItem()` les supprime avant l'annonce |
+
+Limites : les noms dans les commentaires ne sont pas mis à jour ; une suppression interrompue peut laisser des orphelins.
+
+## 13. C'est quoi un index composite ? Et `fieldOverrides` ?
+
+- **Index composite** : nécessaire quand une requête filtre sur un champ et trie sur un autre (`owner == moi` trié par `createdAt`). Déclaré dans `firestore.indexes.json`. Si tu l'oublies, l'erreur contient un lien qui le crée.
+- **`fieldOverrides` avec `indexes: []`** : désactive l'indexation d'un champ. Utilisé pour les champs base64 : ça ne sert à rien de les indexer et ça prend de la place sur le 1 Gio.
+
+## 14. La clé `apiKey` dans l'APK, c'est grave ?
+
+Non. Elle identifie ton projet, ce n'est pas un mot de passe. **La sécurité vient des règles**, d'où leur importance. Ce qui peut arriver au pire avec de bonnes règles : quelqu'un épuise tes lectures du jour (aucun coût, l'app est en pause jusqu'au lendemain). Protection possible plus tard : App Check.
+
+## 15. Et si plus tard je veux des notifs push ou des tâches planifiées ?
+
+Ça nécessite du code serveur, donc Cloud Functions, donc **Blaze** (carte bancaire, avec des quotas gratuits). Les données et les règles de cette version restent valables : il suffirait d'ajouter des fonctions à côté. Les photos pourraient alors passer sur Cloud Storage.
