@@ -78,15 +78,15 @@ app/md/
             └── cdd.pdf
 ```
 
-### Les trois niveaux
+### Les niveaux
 
 | Niveau | Ce que c'est | Où il apparaît |
 |---|---|---|
 | **Thème** | dossier de premier niveau | onglet dans le header, sommaire `#/theme` |
-| **Leçon** (sujet) | sous-dossier d'un thème | bloc pliable dans la colonne de droite |
+| **Leçon** (sujet) | sous-dossier d'un thème ou d'une leçon | bloc pliable dans la colonne de droite (les sous-leçons sont pliables dans leur leçon) |
 | **Page** | fichier `.md` dans un thème ou une leçon | lien dans la colonne de droite |
 
-**Trois niveaux maximum** pour les `.md` : un fichier plus profond (`theme/lecon/sous-dossier/page.md`) est **ignoré**. Seuls les PDF peuvent être rangés plus profond.
+**Pas de limite de profondeur** : un sous-dossier de leçon est une sous-leçon (`theme/lecon/sous-lecon/page.md`), qui peut à son tour contenir des sous-leçons. Les leçons qui contiennent la page ouverte sont dépliées.
 
 ### Les fichiers `intro.md`
 
@@ -276,7 +276,7 @@ hidden: []
 | **Header** | un onglet par thème ; **Accueil** = sommaire complet |
 | **Colonne de gauche** « Sur cette page » | titres de la page, celui en cours est surligné |
 | **Colonne de droite** | pages du thème, leçons pliables (celle de la page ouverte est dépliée) |
-| **Fil d'Ariane** | Thème › Leçon › Page |
+| **Fil d'Ariane** | Thème › Leçon › Sous-leçon… › Page |
 | **Précédent / Suivant** | en bas de page, dans l'ordre du thème |
 | **⟳** | recharge le site : affiche les pages poussées depuis son ouverture |
 | **Mode sombre** | suit le réglage du système |
@@ -363,7 +363,7 @@ En ligne, le site demande la liste des fichiers du dossier `app/md` à l'**API G
 | Une nouvelle page n'apparaît pas | site ouvert avant le push, ou déploiement en cours | bouton **⟳**, puis vérifier l'onglet **Actions** |
 | Une modification du code n'apparaît pas | l'ancienne version reste en cache jusqu'au rechargement suivant | recharger la page deux fois |
 | Un PDF ne s'ouvre pas hors ligne | il n'a jamais été ouvert sur cet appareil | l'ouvrir une fois en ligne |
-| « Page introuvable » | fichier déplacé, renommé, caché, ou plus de 3 niveaux | vérifier le chemin et les `hidden` |
+| « Page introuvable » | fichier déplacé, renommé ou caché | vérifier le chemin et les `hidden` |
 | Un lien s'affiche en texte | aucun fichier ne correspond | vérifier le nom ; un lien avec espaces doit utiliser `%20` ou `<…>` |
 | « API GitHub : erreur 404 » | `repo` mal renseigné dans `config.yaml` | mettre `compte/dépôt`, ou laisser vide |
 | « Limite de l'API GitHub atteinte » | plus de 60 requêtes/heure | attendre quelques minutes |

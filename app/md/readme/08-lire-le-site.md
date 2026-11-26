@@ -5,7 +5,7 @@
 | **Header** | un onglet par thème ; **Accueil** = sommaire complet |
 | **Colonne de gauche** « Sur cette page » | titres de la page, celui en cours est surligné |
 | **Colonne de droite** | pages du thème, leçons pliables (celle de la page ouverte est dépliée) |
-| **Fil d'Ariane** | Thème › Leçon › Page |
+| **Fil d'Ariane** | Thème › Leçon › Sous-leçon… › Page |
 | **Précédent / Suivant** | en bas de page, dans l'ordre du thème |
 | **⟳** | recharge le site : affiche les pages poussées depuis son ouverture |
 | **Mode sombre** | suit le réglage du système |

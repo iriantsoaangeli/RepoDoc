@@ -5,7 +5,7 @@
 | Une nouvelle page n'apparaît pas | site ouvert avant le push, ou déploiement en cours | bouton **⟳**, puis vérifier l'onglet **Actions** |
 | Une modification du code n'apparaît pas | l'ancienne version reste en cache jusqu'au rechargement suivant | recharger la page deux fois |
 | Un PDF ne s'ouvre pas hors ligne | il n'a jamais été ouvert sur cet appareil | l'ouvrir une fois en ligne |
-| « Page introuvable » | fichier déplacé, renommé, caché, ou plus de 3 niveaux | vérifier le chemin et les `hidden` |
+| « Page introuvable » | fichier déplacé, renommé ou caché | vérifier le chemin et les `hidden` |
 | Un lien s'affiche en texte | aucun fichier ne correspond | vérifier le nom ; un lien avec espaces doit utiliser `%20` ou `<…>` |
 | « API GitHub : erreur 404 » | `repo` mal renseigné dans `config.yaml` | mettre `compte/dépôt`, ou laisser vide |
 | « Limite de l'API GitHub atteinte » | plus de 60 requêtes/heure | attendre quelques minutes |

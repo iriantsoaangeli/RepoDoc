@@ -27,15 +27,15 @@ app/md/
             └── cdd.pdf
 ```
 
-## Les trois niveaux
+## Les niveaux
 
 | Niveau | Ce que c'est | Où il apparaît |
 |---|---|---|
 | **Thème** | dossier de premier niveau | onglet dans le header, sommaire `#/theme` |
-| **Leçon** (sujet) | sous-dossier d'un thème | bloc pliable dans la colonne de droite |
+| **Leçon** (sujet) | sous-dossier d'un thème ou d'une leçon | bloc pliable dans la colonne de droite (les sous-leçons sont pliables dans leur leçon) |
 | **Page** | fichier `.md` dans un thème ou une leçon | lien dans la colonne de droite |
 
-**Trois niveaux maximum** pour les `.md` : un fichier plus profond (`theme/lecon/sous-dossier/page.md`) est **ignoré**. Seuls les PDF peuvent être rangés plus profond.
+**Pas de limite de profondeur** : un sous-dossier de leçon est une sous-leçon (`theme/lecon/sous-lecon/page.md`), qui peut à son tour contenir des sous-leçons. Les leçons qui contiennent la page ouverte sont dépliées.
 
 ## Les fichiers `intro.md`
 
