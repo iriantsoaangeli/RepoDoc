@@ -4,10 +4,13 @@
 //   mobile     : un seul menu coulissant qui contient les deux listes
 // Slots : toc (reçoit `actif` = id du titre en cours de lecture), pages, default, footer.
 // Expose `positionner()`, à appeler par la vue quand le contenu est affiché.
+// Sur ordinateur, chaque sidebar a une poignée : largeur automatique, à la main, ou repliée.
 import { IonContent, IonMenu, IonSplitPane, menuController } from '@ionic/vue'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { normaliser } from '@/lecteur/chemins'
+import { useColonne } from './colonne'
+import PoigneeColonne from './PoigneeColonne.vue'
 
 defineProps<{
   /**
@@ -18,6 +21,21 @@ defineProps<{
 }>()
 
 const main = ref<InstanceType<typeof IonContent>>()
+const menu = ref<InstanceType<typeof IonMenu>>()
+const pagesDesk = ref<HTMLElement>()
+
+// Largeur des sidebars, recalculée dès que leur contenu change (nouvelle page, leçon dépliée)
+const gauche = useColonne('gauche', 220)
+const droite = useColonne('droite', 220)
+let image = 0
+const mesurer = () => {
+  cancelAnimationFrame(image)
+  image = requestAnimationFrame(() => {
+    if (menu.value) gauche.mesurer(menu.value.$el, '.toc a')
+    if (pagesDesk.value) droite.mesurer(pagesDesk.value, 'a, ion-label')
+  })
+}
+const observateur = new MutationObserver(mesurer)
 const actif = ref('')
 const route = useRoute()
 const router = useRouter()
@@ -62,9 +80,18 @@ let retour = false
 const onPopstate = () => (retour = true)
 onMounted(() => {
   addEventListener('popstate', onPopstate)
+  addEventListener('resize', mesurer)
   zoneDefilement()
+  // class : une leçon qui se déplie change de classe (accordion-expanded)
+  const options = { subtree: true, childList: true, characterData: true, attributeFilter: ['class'] }
+  for (const el of [menu.value?.$el, pagesDesk.value]) if (el) observateur.observe(el, options)
+  mesurer()
 })
-onBeforeUnmount(() => removeEventListener('popstate', onPopstate))
+onBeforeUnmount(() => {
+  removeEventListener('popstate', onPopstate)
+  removeEventListener('resize', mesurer)
+  observateur.disconnect()
+})
 
 /** Ancre réduite à ses lettres et chiffres sans accents : "2-Récupérer-l-image" → "2recupererlimage" */
 const reduire = (ancre: string) => normaliser(ancre).replace(/[^a-z0-9]/g, '')
@@ -115,8 +142,12 @@ defineExpose({ positionner })
 
 <template>
   <div class="doc-body" :class="{ lecteur }">
-    <IonSplitPane content-id="main" when="lg">
-      <IonMenu content-id="main">
+    <IonSplitPane
+      content-id="main"
+      when="lg"
+      :style="{ '--side-width': gauche.px.value, '--side-min-width': gauche.px.value, '--side-max-width': gauche.px.value }"
+    >
+      <IonMenu ref="menu" content-id="main">
         <IonContent @click="onSideClick">
           <aside class="toc"><slot name="toc" :actif="actif" /></aside>
           <!-- Sur mobile seulement : les pages du thème sont dans le même menu -->
@@ -130,9 +161,34 @@ defineExpose({ positionner })
       </IonContent>
 
       <!-- Sur ordinateur seulement : colonne de droite -->
-      <aside class="pages-col pages-desk ion-hide-lg-down" @click="onSideClick">
+      <aside
+        ref="pagesDesk"
+        class="pages-col pages-desk ion-hide-lg-down"
+        :style="{ width: droite.px.value, display: droite.ouverte.value ? undefined : 'none' }"
+        @click="onSideClick"
+      >
         <slot name="pages" />
       </aside>
     </IonSplitPane>
+
+    <!-- Poignées des sidebars (ordinateur) ; pas de colonne de gauche en mode lecteur -->
+    <PoigneeColonne
+      v-if="!lecteur"
+      cote="gauche"
+      :largeur="gauche.largeur.value"
+      :ouverte="gauche.ouverte.value"
+      @redimensionner="gauche.redimensionner"
+      @automatique="gauche.automatique"
+      @basculer="gauche.basculer"
+    />
+    <PoigneeColonne
+      v-if="$slots.pages"
+      cote="droite"
+      :largeur="droite.largeur.value"
+      :ouverte="droite.ouverte.value"
+      @redimensionner="droite.redimensionner"
+      @automatique="droite.automatique"
+      @basculer="droite.basculer"
+    />
   </div>
 </template>

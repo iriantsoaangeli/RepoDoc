@@ -90,9 +90,27 @@ ion-menu { --width: 290px; --max-width: 85vw; }
 .pages-col a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
 /* Leçons pliables (ion-accordion) : pages décalées sous le titre de la leçon */
-.pages-col ion-accordion .side-list { padding-left: 12px; }
+/* --ion-border-color : dans ion-split-pane, --border vaut « 1px solid … » (voir plus haut) */
+.pages-col ion-accordion .side-list { margin-left: 14px; padding-left: 8px; border-left: 1px solid var(--ion-border-color); }
 .pages-col ion-item { --padding-start: 10px; --min-height: 38px; font-size: 16px; }
 .pages-col .ion-accordion-toggle-icon { color: var(--muted); }
+
+/* ---------- Colonnes redimensionnables (ordinateur) ---------- */
+@media (min-width: 992px) {
+  /* Noms sur une ligne ; « … » seulement si la colonne est réduite à la main */
+  .toc a, .pages-col a, .pages-col ion-label {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+}
+/* Poignée : bord de colonne à tirer, bouton pour replier / rouvrir */
+.poignee { position: absolute; top: 0; bottom: 0; width: 8px; margin-left: -4px; cursor: col-resize; z-index: 10; }
+.poignee:hover, .poignee.tire { background: var(--accent-soft); }
+.poignee button {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 22px; padding: 0; border: 1px solid var(--border); border-radius: 50%;
+  background: var(--bg); color: var(--muted); font-size: 13px; line-height: 1; cursor: pointer;
+}
+.poignee button:hover { color: var(--hover); }
 
 /* Table des matières de la page */
 .toc { font-size: 15px; }
